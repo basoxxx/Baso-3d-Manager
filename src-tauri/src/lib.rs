@@ -57,6 +57,12 @@ pub fn run() {
             commands::customers::create_customer,
             commands::customers::update_customer,
             commands::customers::delete_customer,
+            commands::filaments::list_filaments,
+            commands::filaments::get_filament,
+            commands::filaments::create_filament,
+            commands::filaments::update_filament,
+            commands::filaments::adjust_filament_stock,
+            commands::filaments::delete_filament,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
