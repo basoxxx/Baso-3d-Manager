@@ -63,6 +63,13 @@ pub fn run() {
             commands::filaments::update_filament,
             commands::filaments::adjust_filament_stock,
             commands::filaments::delete_filament,
+            commands::printers::list_printers,
+            commands::printers::get_printer,
+            commands::printers::create_printer,
+            commands::printers::update_printer,
+            commands::printers::delete_printer,
+            commands::settings::get_settings,
+            commands::settings::update_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
