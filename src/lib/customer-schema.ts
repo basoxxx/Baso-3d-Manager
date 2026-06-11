@@ -30,3 +30,5 @@ export function toNewCustomer(values: CustomerFormValues) {
     notes: values.notes || null,
   }
 }
+
+export type NewCustomer = ReturnType<typeof toNewCustomer>
