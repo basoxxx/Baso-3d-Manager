@@ -78,4 +78,11 @@ export const ipc = {
   dashboard: {
     get: () => call<DashboardData>('get_dashboard'),
   },
+
+  exportData: {
+    csv: (domain: 'orders' | 'filaments') =>
+      call<string>('export_csv', { domain }),
+    backup: () => call<string>('export_backup'),
+    restore: () => call<void>('import_backup'),
+  },
 }
