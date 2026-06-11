@@ -1,3 +1,4 @@
+mod commands;
 mod db;
 mod error;
 mod paths;
@@ -49,7 +50,14 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![ping])
+        .invoke_handler(tauri::generate_handler![
+            ping,
+            commands::customers::list_customers,
+            commands::customers::get_customer,
+            commands::customers::create_customer,
+            commands::customers::update_customer,
+            commands::customers::delete_customer,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
