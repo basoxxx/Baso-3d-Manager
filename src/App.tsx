@@ -7,6 +7,8 @@ import { FilamentsPage } from '@/routes/FilamentsPage'
 import { FilamentFormPage } from '@/routes/FilamentFormPage'
 import { PrintersPage } from '@/routes/PrintersPage'
 import { PrinterFormPage } from '@/routes/PrinterFormPage'
+import { OrdersPage } from '@/routes/OrdersPage'
+import { OrderFormPage } from '@/routes/OrderFormPage'
 import { SettingsPage } from '@/routes/SettingsPage'
 
 export function App() {
@@ -15,7 +17,7 @@ export function App() {
       <Toaster theme="dark" position="top-right" richColors closeButton />
       <Routes>
         <Route element={<AppShell />}>
-          <Route path="/" element={<Navigate to="/customers" replace />} />
+          <Route path="/" element={<Navigate to="/orders" replace />} />
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/customers/new" element={<CustomerFormPage />} />
           <Route path="/customers/:id" element={<CustomerFormPage />} />
@@ -25,6 +27,9 @@ export function App() {
           <Route path="/printers" element={<PrintersPage />} />
           <Route path="/printers/new" element={<PrinterFormPage />} />
           <Route path="/printers/:id" element={<PrinterFormPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/orders/new" element={<OrderFormPage />} />
+          <Route path="/orders/:id" element={<OrderFormPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>
