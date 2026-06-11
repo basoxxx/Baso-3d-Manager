@@ -70,6 +70,13 @@ pub fn run() {
             commands::printers::delete_printer,
             commands::settings::get_settings,
             commands::settings::update_settings,
+            commands::orders::list_orders,
+            commands::orders::get_order,
+            commands::orders::create_order,
+            commands::orders::update_order,
+            commands::orders::set_order_status,
+            commands::orders::delete_order,
+            commands::quote_items::list_quote_items,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
