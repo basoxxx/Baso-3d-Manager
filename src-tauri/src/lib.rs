@@ -1,6 +1,7 @@
 mod db;
 mod error;
 mod paths;
+mod repos;
 
 use db::DbPool;
 use error::AppResult;
