@@ -26,7 +26,6 @@ pub struct NewQuoteItem {
     pub material_grams: f64,
     pub filament_id: Option<String>,
     pub post_processing_cost: f64,
-    pub sort_order: i64,
 }
 
 pub fn list_for_order(pool: &DbPool, order_id: &str) -> AppResult<Vec<QuoteItem>> {
@@ -107,12 +106,6 @@ pub fn replace_for_order(
     create_many(pool, order_id, items)
 }
 
-pub fn delete_for_order(pool: &DbPool, order_id: &str) -> AppResult<()> {
-    let conn = pool.get()?;
-    conn.execute("DELETE FROM quote_items WHERE order_id = ?1", params![order_id])?;
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -134,7 +127,6 @@ mod tests {
             material_grams: 50.0,
             filament_id: None,
             post_processing_cost: 0.0,
-            sort_order: 0,
         }
     }
 

@@ -39,14 +39,13 @@ export function toNewOrder(v: OrderFormValues) {
     status: v.status,
     notes: v.notes || null,
     margin_percent: v.margin_percent,
-    quote_items: v.quote_items.map((qi, idx) => ({
+    quote_items: v.quote_items.map((qi) => ({
       description: qi.description,
       quantity: qi.quantity,
       time_hours: qi.time_hours,
       material_grams: qi.material_grams,
       filament_id: qi.filament_id || null,
       post_processing_cost: qi.post_processing_cost,
-      sort_order: idx,
     })),
   }
 }

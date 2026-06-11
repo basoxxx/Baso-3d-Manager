@@ -256,7 +256,7 @@ mod tests {
         let items = vec![NewQuoteItem {
             description: "X".into(), quantity: 1, time_hours: 1.0,
             material_grams: 0.0, filament_id: None,
-            post_processing_cost: 0.0, sort_order: 0,
+            post_processing_cost: 0.0,
         }];
         let (o, items_back) = create(&p, sample_order(&cid, items)).unwrap();
         assert_eq!(o.status, "draft");
@@ -271,7 +271,7 @@ mod tests {
         let items = vec![NewQuoteItem {
             description: "X".into(), quantity: 1, time_hours: 1.0,
             material_grams: 100.0, filament_id: Some(fid.clone()),
-            post_processing_cost: 0.0, sort_order: 0,
+            post_processing_cost: 0.0,
         }];
         let (o, _) = create(&p, sample_order(&cid, items)).unwrap();
         set_status(&p, &o.id, "in_produzione").unwrap();

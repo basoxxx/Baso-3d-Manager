@@ -39,7 +39,7 @@ describe('toNewOrder', () => {
     expect(out.notes).toBeNull()
   })
 
-  it('assigns sequential sort_order', () => {
+  it('preserves item order from form values', () => {
     const out = toNewOrder({
       customer_id: 'c', status: 'draft', notes: '', margin_percent: 0,
       quote_items: [
@@ -47,7 +47,6 @@ describe('toNewOrder', () => {
         { ...emptyQuoteItem, description: 'B' },
       ],
     })
-    expect(out.quote_items[0].sort_order).toBe(0)
-    expect(out.quote_items[1].sort_order).toBe(1)
+    expect(out.quote_items.map((qi) => qi.description)).toEqual(['A', 'B'])
   })
 })
