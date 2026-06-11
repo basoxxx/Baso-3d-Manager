@@ -162,6 +162,18 @@ pub fn adjust_stock(pool: &DbPool, id: &str, delta_grams: f64) -> AppResult<Fila
     get(pool, id)
 }
 
+pub fn adjust_stock_internal(pool: &DbPool, id: &str, delta: f64) -> AppResult<Filament> {
+    let conn = pool.get()?;
+    let changes = conn.execute(
+        "UPDATE filaments SET stock_grams = MAX(0, stock_grams + ?2) WHERE id = ?1 AND deleted_at IS NULL",
+        params![id, delta],
+    )?;
+    if changes == 0 {
+        return Err(AppError::NotFound(format!("filament {id}")));
+    }
+    get(pool, id)
+}
+
 pub fn soft_delete(pool: &DbPool, id: &str) -> AppResult<()> {
     let conn = pool.get()?;
     let changes = conn.execute(
