@@ -5,6 +5,9 @@ import { CustomersPage } from '@/routes/CustomersPage'
 import { CustomerFormPage } from '@/routes/CustomerFormPage'
 import { FilamentsPage } from '@/routes/FilamentsPage'
 import { FilamentFormPage } from '@/routes/FilamentFormPage'
+import { PrintersPage } from '@/routes/PrintersPage'
+import { PrinterFormPage } from '@/routes/PrinterFormPage'
+import { SettingsPage } from '@/routes/SettingsPage'
 
 export function App() {
   return (
@@ -19,6 +22,10 @@ export function App() {
           <Route path="/filaments" element={<FilamentsPage />} />
           <Route path="/filaments/new" element={<FilamentFormPage />} />
           <Route path="/filaments/:id" element={<FilamentFormPage />} />
+          <Route path="/printers" element={<PrintersPage />} />
+          <Route path="/printers/new" element={<PrinterFormPage />} />
+          <Route path="/printers/:id" element={<PrinterFormPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
