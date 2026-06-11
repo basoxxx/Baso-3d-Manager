@@ -1,0 +1,71 @@
+# BASO 3D Manager
+
+Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), offline-first, basato su Tauri 2 + React + SQLite.
+
+## Features
+
+- Gestione clienti, ordini, preventivi con calcolo prezzi live
+- Magazzino filamenti con alert scorte basse
+- Configurazione stampanti e parametri globali
+- Dashboard con KPI e grafico fatturato
+- Export CSV (Excel IT compatibile)
+- Backup/ripristino ZIP
+- Auto-update via GitHub Releases
+- Dark mode
+
+## Requisiti di sviluppo
+
+- Node 20+, Bun
+- Rust stable (1.75+)
+- Tauri CLI: `cargo install tauri-cli --version "^2"`
+- pnpm (opzionale, Bun già gestisce)
+
+## Comandi
+
+```bash
+bun install          # install deps
+bun run tauri:dev    # dev con hot reload
+bun run test         # unit test
+bun run tauri:build  # build produzione OS corrente
+```
+
+## Build cross-platform
+
+Richiede i target Rust installati:
+
+```bash
+rustup target add aarch64-apple-darwin
+rustup target add x86_64-apple-darwin
+rustup target add x86_64-pc-windows-msvc
+```
+
+Quindi:
+
+```bash
+bun run tauri:build:mac-arm
+bun run tauri:build:mac-intel
+bun run tauri:build:win
+```
+
+I bundle sono in `src-tauri/target/release/bundle/`.
+
+## Release
+
+```bash
+bun run version:patch   # bump + tag + push → CI builda e pubblica
+```
+
+## Sicurezza
+
+- macOS: app non firmata al primo avvio, autorizzare da "Sicurezza e Privacy" → "Apri comunque"
+- Windows: SmartScreen warning al primo avvio, cliccare "Maggiori informazioni" → "Esegui comunque"
+
+## Architettura
+
+- **Backend**: Rust con `rusqlite` (SQLite embedded), comandi Tauri esposti via IPC
+- **Frontend**: React 19 + Vite + Tailwind 4 + TanStack Query
+- **Storage**: `~/Library/Application Support/BASO3DManager/baso.db` (mac) o `%APPDATA%/BASO3DManager/baso.db` (win)
+
+## Licenza
+
+Proprietario.
