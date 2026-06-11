@@ -77,6 +77,7 @@ pub fn run() {
             commands::orders::set_order_status,
             commands::orders::delete_order,
             commands::quote_items::list_quote_items,
+            commands::dashboard::get_dashboard,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

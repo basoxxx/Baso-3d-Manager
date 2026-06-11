@@ -1,4 +1,5 @@
 pub mod customers;
+pub mod dashboard;
 pub mod filaments;
 pub mod orders;
 pub mod printers;
