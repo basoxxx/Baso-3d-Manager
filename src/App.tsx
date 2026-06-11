@@ -1,20 +1,21 @@
-import { useQuery } from '@tanstack/react-query'
-import { ipc } from '@/lib/ipc'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
+import { AppShell } from '@/components/layout/AppShell'
+import { CustomersPage } from '@/routes/CustomersPage'
+import { CustomerFormPage } from '@/routes/CustomerFormPage'
 
 export function App() {
-  const { data, error, isLoading } = useQuery({
-    queryKey: ['ping'],
-    queryFn: () => ipc.ping(),
-  })
-
   return (
-    <div className="flex h-full items-center justify-center bg-bg-0 text-text-2">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-text-1">BASO 3D Manager</h1>
-        {isLoading && <p className="mt-2 text-text-3">Loading…</p>}
-        {data && <p className="mt-2 text-success">{data}</p>}
-        {error && <p className="mt-2 text-danger">Error: {String(error)}</p>}
-      </div>
-    </div>
+    <BrowserRouter>
+      <Toaster theme="dark" position="top-right" richColors closeButton />
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="/" element={<Navigate to="/customers" replace />} />
+          <Route path="/customers" element={<CustomersPage />} />
+          <Route path="/customers/new" element={<CustomerFormPage />} />
+          <Route path="/customers/:id" element={<CustomerFormPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
