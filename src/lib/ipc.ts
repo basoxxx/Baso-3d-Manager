@@ -18,6 +18,7 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> 
 }
 
 import type { Customer, Filament, Order, OrderStatus, Printer, QuoteItem, Settings } from './db-types'
+import type { DashboardData } from './dashboard-types'
 
 interface NewCustomer { name: string; email: string; phone: string|null; address: string|null; vat_number: string|null; notes: string|null }
 export interface NewFilament { brand: string; material: string; color: string|null; diameter: number; density: number|null; price_per_kg: number; stock_grams: number; low_stock_threshold: number }
@@ -72,5 +73,9 @@ export const ipc = {
 
   quoteItems: {
     list: (orderId: string) => call<QuoteItem[]>('list_quote_items', { orderId }),
+  },
+
+  dashboard: {
+    get: () => call<DashboardData>('get_dashboard'),
   },
 }
