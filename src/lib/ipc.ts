@@ -25,6 +25,27 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> 
   }
 }
 
+import type { Customer } from './db-types'
+
+interface NewCustomer {
+  name: string
+  email: string
+  phone: string | null
+  address: string | null
+  vat_number: string | null
+  notes: string | null
+}
+
 export const ipc = {
   ping: () => call<string>('ping'),
+
+  customers: {
+    list: (search?: string) =>
+      call<Customer[]>('list_customers', { search: search ?? null }),
+    get: (id: string) => call<Customer>('get_customer', { id }),
+    create: (input: NewCustomer) => call<Customer>('create_customer', { input }),
+    update: (id: string, input: NewCustomer) =>
+      call<Customer>('update_customer', { id, input }),
+    delete: (id: string) => call<void>('delete_customer', { id }),
+  },
 }
