@@ -8,7 +8,6 @@ mod repos;
 
 use db::DbPool;
 use error::AppResult;
-use std::sync::Mutex;
 use tauri::Manager;
 
 pub struct AppState {
