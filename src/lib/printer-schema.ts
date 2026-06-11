@@ -35,3 +35,5 @@ export function toNewPrinter(v: PrinterFormValues) {
     notes: v.notes || null,
   }
 }
+
+export type NewPrinter = ReturnType<typeof toNewPrinter>

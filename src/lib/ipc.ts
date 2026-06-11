@@ -25,7 +25,7 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> 
   }
 }
 
-import type { Customer, Filament } from './db-types'
+import type { Customer, Filament, Printer, Settings } from './db-types'
 
 interface NewCustomer {
   name: string
@@ -47,6 +47,23 @@ export interface NewFilament {
   low_stock_threshold: number
 }
 
+interface NewPrinter {
+  name: string
+  model: string | null
+  build_volume_x: number | null
+  build_volume_y: number | null
+  build_volume_z: number | null
+  status: string
+  notes: string | null
+}
+
+interface UpdateSettings {
+  default_hourly_rate: number
+  default_margin_percent: number
+  currency: string
+  vat_rate: number
+}
+
 export const ipc = {
   ping: () => call<string>('ping'),
 
@@ -66,5 +83,18 @@ export const ipc = {
     adjustStock: (id: string, delta_grams: number) =>
       call<Filament>('adjust_filament_stock', { id, delta_grams }),
     delete: (id: string) => call<void>('delete_filament', { id }),
+  },
+
+  printers: {
+    list: () => call<Printer[]>('list_printers'),
+    get: (id: string) => call<Printer>('get_printer', { id }),
+    create: (input: NewPrinter) => call<Printer>('create_printer', { input }),
+    update: (id: string, input: NewPrinter) => call<Printer>('update_printer', { id, input }),
+    delete: (id: string) => call<void>('delete_printer', { id }),
+  },
+
+  settings: {
+    get: () => call<Settings>('get_settings'),
+    update: (input: UpdateSettings) => call<Settings>('update_settings', { input }),
   },
 }
