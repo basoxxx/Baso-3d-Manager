@@ -1,4 +1,5 @@
 mod error;
+mod paths;
 
 use error::AppResult;
 
