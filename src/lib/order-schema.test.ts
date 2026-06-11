@@ -1,0 +1,53 @@
+import { describe, it, expect } from 'vitest'
+import { orderFormSchema, toNewOrder, emptyQuoteItem } from './order-schema'
+
+describe('orderFormSchema', () => {
+  const base = {
+    customer_id: 'c1',
+    status: 'draft' as const,
+    notes: '',
+    margin_percent: 40,
+    quote_items: [{ ...emptyQuoteItem, description: 'X' }],
+  }
+
+  it('accepts valid order', () => {
+    expect(orderFormSchema.safeParse(base).success).toBe(true)
+  })
+
+  it('requires customer_id', () => {
+    const r = orderFormSchema.safeParse({ ...base, customer_id: '' })
+    expect(r.success).toBe(false)
+  })
+
+  it('requires at least one item', () => {
+    const r = orderFormSchema.safeParse({ ...base, quote_items: [] })
+    expect(r.success).toBe(false)
+  })
+
+  it('rejects bad status', () => {
+    const r = orderFormSchema.safeParse({ ...base, status: 'BOGUS' as any })
+    expect(r.success).toBe(false)
+  })
+})
+
+describe('toNewOrder', () => {
+  it('converts empty notes to null', () => {
+    const out = toNewOrder({
+      customer_id: 'c', status: 'draft', notes: '', margin_percent: 0,
+      quote_items: [{ ...emptyQuoteItem, description: 'X' }],
+    })
+    expect(out.notes).toBeNull()
+  })
+
+  it('assigns sequential sort_order', () => {
+    const out = toNewOrder({
+      customer_id: 'c', status: 'draft', notes: '', margin_percent: 0,
+      quote_items: [
+        { ...emptyQuoteItem, description: 'A' },
+        { ...emptyQuoteItem, description: 'B' },
+      ],
+    })
+    expect(out.quote_items[0].sort_order).toBe(0)
+    expect(out.quote_items[1].sort_order).toBe(1)
+  })
+})
