@@ -56,7 +56,7 @@
       "endpoints": [
         "https://github.com/diegobasolo/baso-3d-manager/releases/latest/download/latest.json"
       ],
-      "pubkey": "",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlDOEI0QTVDRTNBOEVFMApSV1RnampyT3BiVElDU2lsbC9NWmRxZU9vMHo2MnluTzlhdkU5SEZrNm83NVNHd29RT0FmenlZMwo=",
       "windows": {
         "installMode": "passive"
       }
