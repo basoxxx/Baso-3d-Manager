@@ -1,10 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useReactTable, getCoreRowModel, getSortedRowModel, type ColumnDef } from '@tanstack/react-table'
-import { Plus, Pencil, Trash2, PlusCircle, MinusCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, PlusCircle, MinusCircle, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFilaments, useDeleteFilament, useAdjustFilamentStock, type Filament } from '@/hooks/useFilaments'
 import { FILAMENT_MATERIALS } from '@/lib/filament-schema'
+import { ipc } from '@/lib/ipc'
 import { Button } from '@/components/ui/Button'
 import { Table } from '@/components/ui/Table'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -15,10 +16,24 @@ import { StockBadge } from '@/components/domain/filaments/StockBadge'
 export function FilamentsPage() {
   const [filter, setFilter] = useState<string>('')
   const [toDelete, setToDelete] = useState<Filament | null>(null)
+  const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
   const { data, isLoading } = useFilaments(filter || undefined)
   const deleteMut = useDeleteFilament()
   const adjustMut = useAdjustFilamentStock()
+
+  const handleExportCsv = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      const path = await ipc.exportData.csv('filaments')
+      if (path) toast.success(`Esportato: ${path}`)
+    } catch (e) {
+      toast.error(`Errore: ${String(e)}`)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   useEffect(() => { /* placeholder for filter debounce if needed */ }, [filter])
 
@@ -115,9 +130,19 @@ export function FilamentsPage() {
         title="Filamenti"
         description="Magazzino filamenti per materiale e colore"
         actions={
-          <Link to="/filaments/new">
-            <Button><Plus size={14} /> Nuovo filamento</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportCsv}
+              loading={exporting}
+            >
+              <Download size={14} /> Esporta CSV
+            </Button>
+            <Link to="/filaments/new">
+              <Button size="sm"><Plus size={14} /> Nuovo filamento</Button>
+            </Link>
+          </div>
         }
       />
 

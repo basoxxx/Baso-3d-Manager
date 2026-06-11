@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useReactTable, getCoreRowModel, getSortedRowModel, type ColumnDef } from '@tanstack/react-table'
-import { Plus, Pencil, Trash2, Eye } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { useOrders, useDeleteOrder, useSetOrderStatus, type Order } from '@/hooks/useOrders'
 import { ORDER_STATUSES } from '@/lib/order-schema'
+import { ipc } from '@/lib/ipc'
 import { Button } from '@/components/ui/Button'
 import { Table } from '@/components/ui/Table'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -17,10 +18,24 @@ import { it } from 'date-fns/locale'
 export function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [toDelete, setToDelete] = useState<Order | null>(null)
+  const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
   const { data, isLoading } = useOrders({ status: statusFilter ? (statusFilter as any) : undefined })
   const deleteMut = useDeleteOrder()
   const setStatus = useSetOrderStatus()
+
+  const handleExportCsv = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      const path = await ipc.exportData.csv('orders')
+      if (path) toast.success(`Esportato: ${path}`)
+    } catch (e) {
+      toast.error(`Errore: ${String(e)}`)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const columns = useMemo<ColumnDef<Order>[]>(() => [
     { accessorKey: 'customer_id', header: 'Cliente', cell: (c) => <span className="font-medium">{c.row.original.customer_id.slice(0, 8)}…</span> },
@@ -101,9 +116,19 @@ export function OrdersPage() {
         title="Ordini"
         description="Gestione preventivi e ordini di stampa"
         actions={
-          <Link to="/orders/new">
-            <Button><Plus size={14} /> Nuovo ordine</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportCsv}
+              loading={exporting}
+            >
+              <Download size={14} /> Esporta CSV
+            </Button>
+            <Link to="/orders/new">
+              <Button size="sm"><Plus size={14} /> Nuovo ordine</Button>
+            </Link>
+          </div>
         }
       />
       <div className="space-y-4 p-6">

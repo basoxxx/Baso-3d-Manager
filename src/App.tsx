@@ -11,6 +11,7 @@ import { PrinterFormPage } from '@/routes/PrinterFormPage'
 import { OrdersPage } from '@/routes/OrdersPage'
 import { OrderFormPage } from '@/routes/OrderFormPage'
 import { SettingsPage } from '@/routes/SettingsPage'
+import { BackupPage } from '@/routes/BackupPage'
 
 export function App() {
   return (
@@ -32,6 +33,7 @@ export function App() {
           <Route path="/orders/new" element={<OrderFormPage />} />
           <Route path="/orders/:id" element={<OrderFormPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/backup" element={<BackupPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
