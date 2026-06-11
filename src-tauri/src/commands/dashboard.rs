@@ -45,24 +45,20 @@ pub fn get_dashboard(state: State<'_, AppState>) -> AppResult<DashboardData> {
     )?;
 
     let month_revenue: f64 = conn.query_row(
-        "SELECT COALESCE(SUM(total), 0.0) FROM (
-            SELECT
-                oi.time_hours * s.default_hourly_rate
-                + (oi.material_grams / 1000.0) * COALESCE(f.price_per_kg, 0)
-                + oi.post_processing_cost AS line_total,
-                oi.quantity AS qty
-            FROM quote_items oi
-            JOIN orders o ON o.id = oi.order_id
-            JOIN settings s ON s.id = 1
-            LEFT JOIN filaments f ON f.id = oi.filament_id
-            WHERE o.deleted_at IS NULL
-              AND date(o.created_at) >= date('now', '-30 days')
-        ) raw
-        JOIN orders o2 ON 1=0
-        ",
+        "SELECT COALESCE(SUM(
+                  (oi.time_hours * s.default_hourly_rate
+                   + (oi.material_grams / 1000.0) * COALESCE(f.price_per_kg, 0)
+                   + oi.post_processing_cost) * oi.quantity
+                ), 0.0)
+         FROM quote_items oi
+         JOIN orders o ON o.id = oi.order_id
+         CROSS JOIN settings s
+         LEFT JOIN filaments f ON f.id = oi.filament_id
+         WHERE o.deleted_at IS NULL
+           AND date(o.created_at) >= date('now', '-30 days')",
         [],
         |r| r.get(0),
-    ).unwrap_or(0.0);
+    )?;
 
     let total_customers: i64 = conn.query_row(
         "SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL",
