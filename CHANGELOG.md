@@ -1,0 +1,45 @@
+# Changelog
+
+Tutte le modifiche notevoli a BASO 3D Manager.
+
+## [0.2.2] - 2026-06-12
+
+### Aggiunto
+- **Logo BASO 3D**: cubo isometrico wireframe con filamento, generato in dark theme palette. Sostituisce i placeholder in tutte le varianti icona (icns, ico, iOS, Android, store logos)
+
+### Corretto
+- **IPC Tauri snake_case**: aggiunto `rename_all = "snake_case"` agli 8 command con argomenti multi-parola. Tauri 2 deserializza di default in camelCase ma il frontend passava snake_case (`delta_grams`, `customer_id`, `new_status`, `order_id`), causando errori silenziosi tipo `missing required key \`deltaGrams\``. Fix per: `adjust_filament_stock`, `set_order_status`, `list_orders`, `update_*`, `list_quote_items`, `export_csv`
+- **Form numerici ordini**: aggiunto `valueAsNumber: true` a tutti gli input numerici in `QuoteItemRow` e `OrderFormPage`. RHF + `<input type=number>` salvava stringhe dopo l'interazione utente, l'aritmetica concatenava invece di sommare e `.toFixed(2)` esplodeva. Fix il bug "clicco costo extra esplode tutto"
+
+## [Unreleased]
+
+### Aggiunto
+- Toggle IVA per ordine: checkbox nel riepilogo per applicare o meno l'IVA (default ON); persistito in colonna `orders.apply_vat`
+- Legenda "Come si calcola il prezzo" espandibile nella sezione Articoli, con spiegazione delle formule e dei valori reali di tariffa oraria / IVA da Impostazioni
+- Helper inline sotto ogni campo articolo (tempo, materiale, post-proc, filamento) per chiarire l'unità di misura e cosa contribuisce al subtotale
+- Tariffa oraria ora letta da Impostazioni (era hardcoded a 2.5)
+
+## [0.2.0] - 2026-06-12
+
+Prima release pubblica con tutte le feature core.
+
+### Aggiunto
+- **Gestione clienti**: CRUD completo con ricerca live
+- **Gestione ordini**: stati (Bozza → In produzione → Completato → Consegnato, Annullato), calcolo prezzi live (materiale, manodopera, post-processing, margine, IVA)
+- **Magazzino filamenti**: CRUD, alert scorte basse, filtri per materiale, aggiustamenti stock rapidi ±100g, decremento automatico al passaggio in produzione
+- **Stampanti**: CRUD con stato (disponibile/in uso/manutenzione) e volume di stampa
+- **Impostazioni globali**: tariffa oraria, margine default, valuta, IVA
+- **Dashboard**: 4 KPI (ordini attivi, fatturato 30gg, clienti, margine medio), grafico fatturato 30gg, prossimi ordini
+- **Export CSV**: ordini e filamenti, formato italiano (UTF-8 BOM, separatore virgola, date dd/mm/yyyy)
+- **Backup ZIP**: export compresso con manifest versionato, restore atomico
+- **Auto-update**: notifica in topbar, check ogni 6h, scarica + riavvia con un click
+- **Dark mode** first-class design system
+- **CI**: GitHub Actions matrix per macOS arm64+Intel e Windows x64
+- **Test**: 35 test Rust + 33 test TypeScript, 0 warning
+
+### Note
+- macOS: app non firmata (autorizzare da Sicurezza e Privacy al primo avvio)
+- Windows: SmartScreen warning (cliccare "Esegui comunque")
+- Auto-update richiede setup manuale secret `TAURI_SIGNING_PRIVATE_KEY` + `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` su GitHub
+
+[0.2.0]: https://github.com/diegobasolo/baso-3d-manager/releases/tag/v0.2.0
