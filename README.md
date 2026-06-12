@@ -24,14 +24,6 @@ Un piccolo laboratorio di stampa 3D ha bisogno di tracciare **chi ordina cosa, q
 
 ---
 
-## 🖼️ Screenshot
-
-| Dashboard | Ordine con calcolo live |
-|---|---|
-| _TODO: screenshot_ | _TODO: screenshot_ |
-
----
-
 ## 📦 Download
 
 Vedi la pagina [Releases](../../releases). Ultima build stabile: **0.2.2**.
