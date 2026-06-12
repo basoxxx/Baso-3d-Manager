@@ -6,9 +6,6 @@
 [![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](#-download)
 [![stack](https://img.shields.io/badge/stack-Tauri%202%20%2B%20React%2019%20%2B%20Rust-orange.svg)](#-architettura)
 [![license](https://img.shields.io/badge/license-Proprietary-red.svg)](#-licenza)
-[![ci](https://github.com/basoxxx/Baso-3d-Manager/actions/workflows/ci.yml/badge.svg)](../../actions)
-[![release](https://github.com/basoxxx/Baso-3d-Manager/actions/workflows/release.yml/badge.svg)](../../actions)
-
 ---
 
 ## ✨ Cosa fa
