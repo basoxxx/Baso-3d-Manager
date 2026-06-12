@@ -2,6 +2,15 @@
 
 Tutte le modifiche notevoli a BASO 3D Manager.
 
+## [0.2.2] - 2026-06-12
+
+### Aggiunto
+- **Logo BASO 3D**: cubo isometrico wireframe con filamento, generato in dark theme palette. Sostituisce i placeholder in tutte le varianti icona (icns, ico, iOS, Android, store logos)
+
+### Corretto
+- **IPC Tauri snake_case**: aggiunto `rename_all = "snake_case"` agli 8 command con argomenti multi-parola. Tauri 2 deserializza di default in camelCase ma il frontend passava snake_case (`delta_grams`, `customer_id`, `new_status`, `order_id`), causando errori silenziosi tipo `missing required key \`deltaGrams\``. Fix per: `adjust_filament_stock`, `set_order_status`, `list_orders`, `update_*`, `list_quote_items`, `export_csv`
+- **Form numerici ordini**: aggiunto `valueAsNumber: true` a tutti gli input numerici in `QuoteItemRow` e `OrderFormPage`. RHF + `<input type=number>` salvava stringhe dopo l'interazione utente, l'aritmetica concatenava invece di sommare e `.toFixed(2)` esplodeva. Fix il bug "clicco costo extra esplode tutto"
+
 ## [Unreleased]
 
 ### Aggiunto
