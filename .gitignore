@@ -35,3 +35,6 @@ test-results/
 
 # App data (generated at runtime, never commit)
 .superpowers/brainstorm/
+
+# Local app bundle (build artifact)
+"BASO 3D Manager.app/"
