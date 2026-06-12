@@ -1,4 +1,4 @@
-import { useWatch, useFormContext } from 'react-hook-form'
+import { useWatch, useFormContext, Controller } from 'react-hook-form'
 import { useSettings } from '@/hooks/useSettings'
 import { useFilaments } from '@/hooks/useFilaments'
 import { calcOrderTotals, type QuoteItemInput } from '@/lib/calc'
@@ -10,6 +10,7 @@ export function PriceSummary() {
   const { data: filaments } = useFilaments()
   const items = useWatch({ control, name: 'quote_items' }) || []
   const margin = useWatch({ control, name: 'margin_percent' }) || 0
+  const applyVat = useWatch({ control, name: 'apply_vat' }) ?? true
 
   const calcItems: QuoteItemInput[] = items.map((i) => {
     const f = filaments?.find((x) => x.id === i.filament_id)
@@ -23,7 +24,7 @@ export function PriceSummary() {
     }
   })
 
-  const totals = calcOrderTotals(calcItems, Number(margin) || 0, settings?.vat_rate || 0)
+  const totals = calcOrderTotals(calcItems, Number(margin) || 0, settings?.vat_rate || 0, applyVat)
   const currency = settings?.currency || 'EUR'
 
   return (
@@ -42,15 +43,42 @@ export function PriceSummary() {
           <span>Imponibile</span>
           <span>€{totals.taxable.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-text-2">
-          <span>IVA ({settings?.vat_rate.toFixed(1)}%)</span>
-          <span>€{totals.vat_amount.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between border-t border-border pt-2 text-base font-bold text-success">
-          <span>Totale</span>
-          <span>€{totals.total.toFixed(2)} {currency}</span>
+        {applyVat && (
+          <div className="flex justify-between text-text-2">
+            <span>IVA ({settings?.vat_rate.toFixed(1)}%)</span>
+            <span>€{totals.vat_amount.toFixed(2)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t border-border pt-2">
+          <span className="text-base font-bold text-success">Totale</span>
+          <div className="flex items-center gap-2">
+            {!applyVat && (
+              <span className="rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-warning">
+                Esente IVA
+              </span>
+            )}
+            <span className="text-base font-bold text-success">
+              €{totals.total.toFixed(2)} {currency}
+            </span>
+          </div>
         </div>
       </div>
+      <Controller
+        control={control}
+        name="apply_vat"
+        render={({ field }) => (
+          <label className="flex cursor-pointer items-center gap-2 border-t border-border pt-3 text-xs text-text-2">
+            <input
+              type="checkbox"
+              checked={field.value}
+              onChange={(e) => field.onChange(e.target.checked)}
+              onBlur={field.onBlur}
+              className="h-3.5 w-3.5 rounded border-border bg-bg-1 text-accent focus:ring-accent"
+            />
+            <span>Applica IVA ({settings?.vat_rate.toFixed(1)}%)</span>
+          </label>
+        )}
+      />
     </div>
   )
 }

@@ -13,6 +13,7 @@ pub struct Order {
     pub status: String,
     pub notes: Option<String>,
     pub margin_percent: f64,
+    pub apply_vat: bool,
     pub created_at: String,
     pub updated_at: String,
     pub deleted_at: Option<String>,
@@ -24,6 +25,7 @@ pub struct NewOrder {
     pub status: String,
     pub notes: Option<String>,
     pub margin_percent: f64,
+    pub apply_vat: bool,
     pub quote_items: Vec<NewQuoteItem>,
 }
 
@@ -36,7 +38,7 @@ pub fn list(
 ) -> AppResult<Vec<Order>> {
     let conn = pool.get()?;
     let mut sql = String::from(
-        "SELECT id, customer_id, status, notes, margin_percent, created_at, updated_at, deleted_at
+        "SELECT id, customer_id, status, notes, margin_percent, apply_vat, created_at, updated_at, deleted_at
          FROM orders WHERE deleted_at IS NULL",
     );
     let mut binds: Vec<String> = Vec::new();
@@ -60,9 +62,10 @@ pub fn list(
             status: row.get(2)?,
             notes: row.get(3)?,
             margin_percent: row.get(4)?,
-            created_at: row.get(5)?,
-            updated_at: row.get(6)?,
-            deleted_at: row.get(7)?,
+            apply_vat: row.get::<_, i64>(5)? != 0,
+            created_at: row.get(6)?,
+            updated_at: row.get(7)?,
+            deleted_at: row.get(8)?,
         })
     };
 
@@ -79,7 +82,7 @@ pub fn list(
 pub fn get_with_items(pool: &DbPool, id: &str) -> AppResult<(Order, Vec<QuoteItem>)> {
     let conn = pool.get()?;
     let order = conn.query_row(
-        "SELECT id, customer_id, status, notes, margin_percent, created_at, updated_at, deleted_at
+        "SELECT id, customer_id, status, notes, margin_percent, apply_vat, created_at, updated_at, deleted_at
          FROM orders WHERE id = ?1 AND deleted_at IS NULL",
         params![id],
         |r| {
@@ -89,9 +92,10 @@ pub fn get_with_items(pool: &DbPool, id: &str) -> AppResult<(Order, Vec<QuoteIte
                 status: r.get(2)?,
                 notes: r.get(3)?,
                 margin_percent: r.get(4)?,
-                created_at: r.get(5)?,
-                updated_at: r.get(6)?,
-                deleted_at: r.get(7)?,
+                apply_vat: r.get::<_, i64>(5)? != 0,
+                created_at: r.get(6)?,
+                updated_at: r.get(7)?,
+                deleted_at: r.get(8)?,
             })
         },
     )
@@ -110,14 +114,15 @@ pub fn create(pool: &DbPool, input: NewOrder) -> AppResult<(Order, Vec<QuoteItem
     let tx = conn.transaction()?;
 
     tx.execute(
-        "INSERT INTO orders (id, customer_id, status, notes, margin_percent)
-         VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT INTO orders (id, customer_id, status, notes, margin_percent, apply_vat)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![
             id,
             input.customer_id,
             input.status,
             input.notes,
             input.margin_percent,
+            input.apply_vat as i64,
         ],
     )?;
     tx.commit()?;
@@ -133,7 +138,7 @@ pub fn update(pool: &DbPool, id: &str, input: NewOrder) -> AppResult<(Order, Vec
     let tx = conn.transaction()?;
     let changes = tx.execute(
         "UPDATE orders
-         SET customer_id = ?2, status = ?3, notes = ?4, margin_percent = ?5,
+         SET customer_id = ?2, status = ?3, notes = ?4, margin_percent = ?5, apply_vat = ?6,
              updated_at = datetime('now')
          WHERE id = ?1 AND deleted_at IS NULL",
         params![
@@ -142,6 +147,7 @@ pub fn update(pool: &DbPool, id: &str, input: NewOrder) -> AppResult<(Order, Vec
             input.status,
             input.notes,
             input.margin_percent,
+            input.apply_vat as i64,
         ],
     )?;
     if changes == 0 {
@@ -245,8 +251,21 @@ mod tests {
             status: "draft".into(),
             notes: None,
             margin_percent: 40.0,
+            apply_vat: true,
             quote_items: items,
         }
+    }
+
+    #[test]
+    fn create_persists_apply_vat() {
+        let p = pool();
+        let cid = seed_customer(&p);
+        let mut o = sample_order(&cid, vec![]);
+        o.apply_vat = false;
+        let (created, _) = create(&p, o).unwrap();
+        assert!(!created.apply_vat);
+        let fetched = get_with_items(&p, &created.id).unwrap().0;
+        assert!(!fetched.apply_vat);
     }
 
     #[test]

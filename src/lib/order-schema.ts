@@ -18,6 +18,7 @@ export const orderFormSchema = z.object({
   status: z.enum(ORDER_STATUSES),
   notes: z.string().trim().nullish(),
   margin_percent: z.coerce.number().min(0, 'Non negativo'),
+  apply_vat: z.boolean(),
   quote_items: z.array(quoteItemFormSchema).min(1, 'Almeno un articolo'),
 })
 
@@ -39,6 +40,7 @@ export function toNewOrder(v: OrderFormValues) {
     status: v.status,
     notes: v.notes || null,
     margin_percent: v.margin_percent,
+    apply_vat: v.apply_vat,
     quote_items: v.quote_items.map((qi) => ({
       description: qi.description,
       quantity: qi.quantity,

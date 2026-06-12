@@ -2,6 +2,14 @@
 
 Tutte le modifiche notevoli a BASO 3D Manager.
 
+## [Unreleased]
+
+### Aggiunto
+- Toggle IVA per ordine: checkbox nel riepilogo per applicare o meno l'IVA (default ON); persistito in colonna `orders.apply_vat`
+- Legenda "Come si calcola il prezzo" espandibile nella sezione Articoli, con spiegazione delle formule e dei valori reali di tariffa oraria / IVA da Impostazioni
+- Helper inline sotto ogni campo articolo (tempo, materiale, post-proc, filamento) per chiarire l'unità di misura e cosa contribuisce al subtotale
+- Tariffa oraria ora letta da Impostazioni (era hardcoded a 2.5)
+
 ## [0.2.0] - 2026-06-12
 
 Prima release pubblica con tutte le feature core.

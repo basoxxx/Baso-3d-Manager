@@ -46,10 +46,14 @@ CREATE TABLE IF NOT EXISTS orders (
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','in_produzione','completato','consegnato','annullato')),
   notes TEXT,
   margin_percent REAL NOT NULL DEFAULT 40,
+  apply_vat INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   deleted_at TEXT
 );
+
+-- v2: per-order VAT toggle (idempotent — skip if column already exists)
+ALTER TABLE orders ADD COLUMN apply_vat INTEGER NOT NULL DEFAULT 1;
 
 CREATE TABLE IF NOT EXISTS quote_items (
   id TEXT PRIMARY KEY,

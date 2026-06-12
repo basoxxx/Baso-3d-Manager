@@ -25,7 +25,7 @@ export interface NewFilament { brand: string; material: string; color: string|nu
 interface NewPrinter { name: string; model: string|null; build_volume_x: number|null; build_volume_y: number|null; build_volume_z: number|null; status: string; notes: string|null }
 interface UpdateSettings { default_hourly_rate: number; default_margin_percent: number; currency: string; vat_rate: number }
 interface NewQuoteItem { description: string; quantity: number; time_hours: number; material_grams: number; filament_id: string|null; post_processing_cost: number }
-export interface NewOrder { customer_id: string; status: string; notes: string|null; margin_percent: number; quote_items: NewQuoteItem[] }
+export interface NewOrder { customer_id: string; status: string; notes: string|null; margin_percent: number; apply_vat: boolean; quote_items: NewQuoteItem[] }
 export interface OrderWithItems extends Order { items: QuoteItem[] }
 
 export const ipc = {

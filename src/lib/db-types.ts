@@ -51,6 +51,7 @@ export interface Order {
   status: OrderStatus
   notes: string | null
   margin_percent: number
+  apply_vat: boolean
   created_at: string
   updated_at: string
   deleted_at: string | null

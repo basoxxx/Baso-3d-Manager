@@ -24,12 +24,13 @@ export function calcItemTotal(i: QuoteItemInput): number {
 export function calcOrderTotals(
   items: QuoteItemInput[],
   marginPercent: number,
-  vatRate: number
+  vatRate: number,
+  applyVat: boolean = true
 ): OrderTotals {
   const subtotal_items = items.reduce((s, i) => s + calcItemTotal(i), 0)
   const margin_amount = subtotal_items * ((marginPercent || 0) / 100)
   const taxable = subtotal_items + margin_amount
-  const vat_amount = taxable * ((vatRate || 0) / 100)
+  const vat_amount = applyVat ? taxable * ((vatRate || 0) / 100) : 0
   const total = taxable + vat_amount
   return {
     subtotal_items: round2(subtotal_items),

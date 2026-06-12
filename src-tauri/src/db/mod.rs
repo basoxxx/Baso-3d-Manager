@@ -37,7 +37,25 @@ pub fn init_pool(db_path: &std::path::Path) -> Result<DbPool, DbError> {
 
 pub fn run_migrations(pool: &DbPool) -> Result<(), DbError> {
     let conn = pool.get()?;
-    conn.execute_batch(schema::SQL)?;
+    // Schema is multi-statement SQL. We need to run it twice on existing DBs:
+    // `CREATE TABLE IF NOT EXISTS` is naturally idempotent, but our v2 migration
+    // (`ALTER TABLE ... ADD COLUMN apply_vat`) would fail on the second run because
+    // the column already exists. Skip statements that error with "duplicate column".
+    for stmt in schema::SQL.split(';') {
+        let trimmed = stmt.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        match conn.execute_batch(trimmed) {
+            Ok(()) => {}
+            Err(rusqlite::Error::SqliteFailure(_, Some(msg)))
+                if msg.contains("duplicate column name") =>
+            {
+                // expected on re-run; column already present
+            }
+            Err(e) => return Err(e.into()),
+        }
+    }
     Ok(())
 }
 
@@ -91,5 +109,23 @@ mod tests {
         let pool = init_pool(&path).unwrap();
         run_migrations(&pool).unwrap();
         run_migrations(&pool).unwrap();
+    }
+
+    #[test]
+    fn orders_has_apply_vat_column() {
+        let path = temp_db_path();
+        let pool = init_pool(&path).unwrap();
+        run_migrations(&pool).unwrap();
+
+        let conn = pool.get().unwrap();
+        let mut stmt = conn
+            .prepare("PRAGMA table_info(orders)")
+            .unwrap();
+        let cols: Vec<String> = stmt
+            .query_map([], |r| r.get::<_, String>(1))
+            .unwrap()
+            .filter_map(Result::ok)
+            .collect();
+        assert!(cols.iter().any(|c| c == "apply_vat"), "apply_vat column missing");
     }
 }

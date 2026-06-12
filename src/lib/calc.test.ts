@@ -83,4 +83,15 @@ describe('calcOrderTotals', () => {
     expect(t.vat_amount).toBe(0)
     expect(t.total).toBe(18)
   })
+
+  it('skips VAT when applyVat is false', () => {
+    const t = calcOrderTotals([
+      item({ time_hours: 10, hourly_rate: 10 }), // 100
+    ], 40, 22, false)
+    expect(t.subtotal_items).toBe(100)
+    expect(t.margin_amount).toBe(40)
+    expect(t.taxable).toBe(140)
+    expect(t.vat_amount).toBe(0)
+    expect(t.total).toBe(140)
+  })
 })

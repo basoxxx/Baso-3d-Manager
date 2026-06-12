@@ -8,16 +8,16 @@ interface QuoteItemRowProps {
   index: number
   onRemove: () => void
   control: Control<OrderFormValues>
+  hourlyRate: number
 }
 
-export function QuoteItemRow({ index, onRemove, control }: QuoteItemRowProps) {
+export function QuoteItemRow({ index, onRemove, control, hourlyRate }: QuoteItemRowProps) {
   const { register, formState: { errors } } = useFormContext<OrderFormValues>()
   const itemErrors = errors.quote_items?.[index]
   const { data: filaments } = useFilaments()
 
   const item = useWatch({ control, name: `quote_items.${index}` }) as QuoteItemFormValues | undefined
   const selectedFilament = filaments?.find((f) => f.id === item?.filament_id)
-  const hourlyRate = 2.5
 
   const itemTotal = item
     ? (item.time_hours * hourlyRate) +
@@ -43,47 +43,70 @@ export function QuoteItemRow({ index, onRemove, control }: QuoteItemRowProps) {
         error={itemErrors?.description?.message}
       />
       <div className="grid grid-cols-4 gap-2">
-        <Input
-          type="number" min="1" step="1"
-          placeholder="Qtà"
-          {...register(`quote_items.${index}.quantity` as const)}
-          error={itemErrors?.quantity?.message}
-        />
-        <Input
-          type="number" min="0" step="0.1"
-          placeholder="Tempo (h)"
-          {...register(`quote_items.${index}.time_hours` as const)}
-          error={itemErrors?.time_hours?.message}
-        />
-        <Input
-          type="number" min="0" step="1"
-          placeholder="Materiale (g)"
-          {...register(`quote_items.${index}.material_grams` as const)}
-          error={itemErrors?.material_grams?.message}
-        />
-        <Input
-          type="number" min="0" step="0.01"
-          placeholder="Post-proc €"
-          {...register(`quote_items.${index}.post_processing_cost` as const)}
-          error={itemErrors?.post_processing_cost?.message}
-        />
+        <div>
+          <Input
+            type="number" min="1" step="1"
+            placeholder="Qtà"
+            aria-label="Quantità"
+            {...register(`quote_items.${index}.quantity` as const)}
+            error={itemErrors?.quantity?.message}
+          />
+          <p className="mt-0.5 text-[10px] text-text-3">pezzi</p>
+        </div>
+        <div>
+          <Input
+            type="number" min="0" step="0.1"
+            placeholder="Tempo"
+            aria-label="Tempo (ore)"
+            {...register(`quote_items.${index}.time_hours` as const)}
+            error={itemErrors?.time_hours?.message}
+          />
+          <p className="mt-0.5 text-[10px] text-text-3">ore × €{hourlyRate.toFixed(2)}/h</p>
+        </div>
+        <div>
+          <Input
+            type="number" min="0" step="1"
+            placeholder="Materiale"
+            aria-label="Materiale (grammi)"
+            {...register(`quote_items.${index}.material_grams` as const)}
+            error={itemErrors?.material_grams?.message}
+          />
+          <p className="mt-0.5 text-[10px] text-text-3">grammi</p>
+        </div>
+        <div>
+          <Input
+            type="number" min="0" step="0.01"
+            placeholder="Post-proc"
+            aria-label="Post-processing (€)"
+            {...register(`quote_items.${index}.post_processing_cost` as const)}
+            error={itemErrors?.post_processing_cost?.message}
+          />
+          <p className="mt-0.5 text-[10px] text-text-3">costo extra €</p>
+        </div>
       </div>
       <Controller
         control={control}
         name={`quote_items.${index}.filament_id` as const}
         render={({ field }) => (
-          <select
-            value={field.value ?? ''}
-            onChange={(e) => field.onChange(e.target.value || null)}
-            className="h-9 w-full rounded-md border border-border bg-bg-1 px-3 text-sm text-text-1 focus:border-accent focus:outline-none"
-          >
-            <option value="">— Nessun filamento —</option>
-            {filaments?.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.brand} {f.material} {f.color ? `(${f.color})` : ''} — €{f.price_per_kg.toFixed(2)}/kg
-              </option>
-            ))}
-          </select>
+          <div>
+            <select
+              value={field.value ?? ''}
+              onChange={(e) => field.onChange(e.target.value || null)}
+              className="h-9 w-full rounded-md border border-border bg-bg-1 px-3 text-sm text-text-1 focus:border-accent focus:outline-none"
+            >
+              <option value="">— Nessun filamento —</option>
+              {filaments?.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.brand} {f.material} {f.color ? `(${f.color})` : ''} — €{f.price_per_kg.toFixed(2)}/kg
+                </option>
+              ))}
+            </select>
+            <p className="mt-0.5 text-[10px] text-text-3">
+              {selectedFilament
+                ? `usato per calcolare il costo materiale (€/kg)`
+                : 'opzionale — senza filamento il materiale non è calcolato'}
+            </p>
+          </div>
         )}
       />
       <div className="text-right text-xs text-text-3">

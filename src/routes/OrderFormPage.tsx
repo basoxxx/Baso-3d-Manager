@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { CustomerPicker } from '@/components/domain/orders/CustomerPicker'
 import { QuoteItemRow } from '@/components/domain/orders/QuoteItemRow'
 import { PriceSummary } from '@/components/domain/orders/PriceSummary'
+import { PriceLegend } from '@/components/domain/orders/PriceLegend'
 
 export function OrderFormPage() {
   const { id } = useParams<{ id?: string }>()
@@ -32,6 +33,7 @@ export function OrderFormPage() {
       status: 'draft',
       notes: '',
       margin_percent: 40,
+      apply_vat: true,
       quote_items: [emptyQuoteItem],
     },
   })
@@ -46,6 +48,7 @@ export function OrderFormPage() {
         status: existing.status as OrderFormValues['status'],
         notes: existing.notes ?? '',
         margin_percent: existing.margin_percent,
+        apply_vat: existing.apply_vat ?? true,
         quote_items: existing.items.length > 0
           ? existing.items.map((i) => ({
               description: i.description,
@@ -63,6 +66,7 @@ export function OrderFormPage() {
         status: 'draft',
         notes: '',
         margin_percent: settings.default_margin_percent,
+        apply_vat: true,
         quote_items: [emptyQuoteItem],
       })
     }
@@ -129,11 +133,13 @@ export function OrderFormPage() {
                       <Plus size={14} /> Aggiungi
                     </Button>
                   </div>
+                  <PriceLegend />
                   {fields.map((f, index) => (
                     <QuoteItemRow
                       key={f.id}
                       index={index}
                       control={control}
+                      hourlyRate={settings?.default_hourly_rate || 0}
                       onRemove={() => fields.length > 1 && remove(index)}
                     />
                   ))}
