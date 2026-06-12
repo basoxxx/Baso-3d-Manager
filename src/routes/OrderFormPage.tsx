@@ -153,7 +153,7 @@ export function OrderFormPage() {
                     <Input
                       label="Margine (%) *"
                       type="number" step="0.1"
-                      {...register('margin_percent')}
+                      {...register('margin_percent', { valueAsNumber: true })}
                       error={errors.margin_percent?.message}
                     />
                     <div className="flex flex-col gap-1">
