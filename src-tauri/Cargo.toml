@@ -1,6 +1,6 @@
 [package]
 name = "baso-3d-manager"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Gestionale stampa 3D"
 authors = ["BASO"]
