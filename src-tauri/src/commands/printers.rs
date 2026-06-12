@@ -18,7 +18,7 @@ pub fn create_printer(state: State<'_, AppState>, input: NewPrinter) -> AppResul
     printers::create(&state.pool, input)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn update_printer(
     state: State<'_, AppState>,
     id: String,

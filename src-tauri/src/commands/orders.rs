@@ -12,7 +12,7 @@ pub struct OrderWithItems {
     pub items: Vec<QuoteItem>,
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn list_orders(
     state: State<'_, AppState>,
     status: Option<String>,
@@ -33,7 +33,7 @@ pub fn create_order(state: State<'_, AppState>, input: NewOrder) -> AppResult<Or
     Ok(OrderWithItems { order, items })
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn update_order(
     state: State<'_, AppState>,
     id: String,
@@ -43,7 +43,7 @@ pub fn update_order(
     Ok(OrderWithItems { order, items })
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn set_order_status(
     state: State<'_, AppState>,
     id: String,

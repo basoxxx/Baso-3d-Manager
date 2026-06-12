@@ -3,7 +3,7 @@ use crate::AppState;
 use tauri::State;
 use tauri_plugin_dialog::DialogExt;
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn export_csv(
     app: tauri::AppHandle,
     state: State<'_, AppState>,

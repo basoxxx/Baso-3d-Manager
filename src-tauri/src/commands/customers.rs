@@ -4,7 +4,7 @@ use tauri::State;
 
 use crate::AppState;
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn list_customers(
     state: State<'_, AppState>,
     search: Option<String>,
@@ -22,7 +22,7 @@ pub fn create_customer(state: State<'_, AppState>, input: NewCustomer) -> AppRes
     customers::create(&state.pool, input)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn update_customer(
     state: State<'_, AppState>,
     id: String,

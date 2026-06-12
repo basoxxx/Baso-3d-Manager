@@ -8,7 +8,7 @@ pub fn get_settings(state: State<'_, AppState>) -> AppResult<Settings> {
     settings::get(&state.pool)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn update_settings(
     state: State<'_, AppState>,
     input: UpdateSettings,
