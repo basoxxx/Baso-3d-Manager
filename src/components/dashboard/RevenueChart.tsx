@@ -1,6 +1,6 @@
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { DailyTotal } from '@/lib/dashboard-types'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 
 interface RevenueChartProps {
@@ -9,7 +9,9 @@ interface RevenueChartProps {
 
 export function RevenueChart({ data }: RevenueChartProps) {
   const formatted = data.map((d) => ({
-    date: format(parseISO(d.date), 'dd MMM', { locale: it }),
+    // SQLite `date(...)` returns "YYYY-MM-DD" (no time) which date-fns parseISO
+    // accepts but new Date() handles more leniently across versions.
+    date: format(new Date(d.date), 'dd MMM', { locale: it }),
     total: d.total,
   }))
 

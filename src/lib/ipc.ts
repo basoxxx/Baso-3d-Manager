@@ -67,7 +67,7 @@ export const ipc = {
     get: (id: string) => call<OrderWithItems>('get_order', { id }),
     create: (input: NewOrder) => call<OrderWithItems>('create_order', { input }),
     update: (id: string, input: NewOrder) => call<OrderWithItems>('update_order', { id, input }),
-    setStatus: (id: string, newStatus: string) => call<Order>('set_order_status', { id, newStatus: newStatus }),
+    setStatus: (id: string, newStatus: string) => call<Order>('set_order_status', { id, new_status: newStatus }),
     delete: (id: string) => call<void>('delete_order', { id }),
   },
 

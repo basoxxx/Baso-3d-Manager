@@ -168,11 +168,19 @@ pub fn set_status(pool: &DbPool, id: &str, new_status: &str) -> AppResult<Order>
     let (order, items) = get_with_items(pool, id)?;
     if order.status == "draft" && new_status == "in_produzione" {
         for item in items {
-            if let Some(fid) = item.filament_id {
-                if item.material_grams > 0.0 {
-                    let _ = super::filaments::adjust_stock_internal(
-                        pool, &fid, -item.material_grams * (item.quantity as f64),
-                    )?;
+            // Skip items without a real filament assigned (None or empty string)
+            let Some(fid) = item.filament_id.as_deref().filter(|s| !s.is_empty()) else {
+                continue;
+            };
+            if item.material_grams > 0.0 && item.quantity > 0 {
+                // Best-effort stock decrement. If the filament was soft-deleted
+                // or the row vanished, log and continue — don't block the status
+                // transition (a user can still want to mark an old order as
+                // "in production" even if its filament is gone).
+                if let Err(e) = super::filaments::adjust_stock_internal(
+                    pool, fid, -item.material_grams * (item.quantity as f64),
+                ) {
+                    tracing::warn!(order_id = %id, filament_id = %fid, error = %e, "stock decrement skipped");
                 }
             }
         }
@@ -307,5 +315,62 @@ mod tests {
             set_status(&p, &o.id, "BROKEN"),
             Err(AppError::Validation(_))
         ));
+    }
+
+    #[test]
+    fn set_status_to_production_skips_missing_filament() {
+        // Regression: a draft order referencing a soft-deleted filament must
+        // still transition to in_produzione (best-effort stock decrement).
+        let p = pool();
+        let cid = seed_customer(&p);
+        let fid = seed_filament(&p, 1000.0);
+        let items = vec![NewQuoteItem {
+            description: "X".into(), quantity: 1, time_hours: 1.0,
+            material_grams: 100.0, filament_id: Some(fid.clone()),
+            post_processing_cost: 0.0,
+        }];
+        let (o, _) = create(&p, sample_order(&cid, items)).unwrap();
+        crate::repos::filaments::soft_delete(&p, &fid).unwrap();
+        let updated = set_status(&p, &o.id, "in_produzione").unwrap();
+        assert_eq!(updated.status, "in_produzione");
+    }
+
+    #[test]
+    fn list_with_no_filters_returns_all() {
+        let p = pool();
+        let cid = seed_customer(&p);
+        create(&p, sample_order(&cid, vec![])).unwrap();
+        create(&p, sample_order(&cid, vec![])).unwrap();
+        let all = list(&p, None, None).unwrap();
+        assert_eq!(all.len(), 2);
+    }
+
+    #[test]
+    fn list_with_status_filter() {
+        let p = pool();
+        let cid = seed_customer(&p);
+        let (o, _) = create(&p, sample_order(&cid, vec![])).unwrap();
+        create(&p, sample_order(&cid, vec![])).unwrap();
+        let drafts = list(&p, Some("draft"), None).unwrap();
+        assert_eq!(drafts.len(), 2);
+        set_status(&p, &o.id, "in_produzione").unwrap();
+        let drafts = list(&p, Some("draft"), None).unwrap();
+        let in_prod = list(&p, Some("in_produzione"), None).unwrap();
+        assert_eq!(drafts.len(), 1);
+        assert_eq!(in_prod.len(), 1);
+    }
+
+    #[test]
+    fn list_with_customer_id_filter() {
+        let p = pool();
+        let cid_a = seed_customer(&p);
+        let cid_b = customers::create(&p, customers::NewCustomer {
+            name: "Other".into(), email: "o@x.it".into(),
+            phone: None, address: None, vat_number: None, notes: None,
+        }).unwrap().id;
+        create(&p, sample_order(&cid_a, vec![])).unwrap();
+        create(&p, sample_order(&cid_b, vec![])).unwrap();
+        let only_a = list(&p, None, Some(&cid_a)).unwrap();
+        assert_eq!(only_a.len(), 1);
     }
 }
