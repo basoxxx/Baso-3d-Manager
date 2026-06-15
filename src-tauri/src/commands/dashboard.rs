@@ -34,7 +34,7 @@ pub struct UpcomingOrder {
     pub total: f64,
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn get_dashboard(state: State<'_, AppState>) -> AppResult<DashboardData> {
     let conn = state.pool.get()?;
 

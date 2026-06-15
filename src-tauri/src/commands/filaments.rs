@@ -11,12 +11,12 @@ pub fn list_filaments(
     filaments::list(&state.pool, material.as_deref())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn get_filament(state: State<'_, AppState>, id: String) -> AppResult<Filament> {
     filaments::get(&state.pool, &id)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn create_filament(state: State<'_, AppState>, input: NewFilament) -> AppResult<Filament> {
     filaments::create(&state.pool, input)
 }
@@ -39,7 +39,7 @@ pub fn adjust_filament_stock(
     filaments::adjust_stock(&state.pool, &id, delta_grams)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn delete_filament(state: State<'_, AppState>, id: String) -> AppResult<()> {
     filaments::soft_delete(&state.pool, &id)
 }
