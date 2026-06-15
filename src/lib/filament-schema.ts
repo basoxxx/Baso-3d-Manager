@@ -40,3 +40,5 @@ export function toNewFilament(v: FilamentFormValues) {
     low_stock_threshold: v.low_stock_threshold,
   }
 }
+
+export type NewFilament = ReturnType<typeof toNewFilament>

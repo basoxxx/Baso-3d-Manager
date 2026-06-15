@@ -1,4 +1,31 @@
+/**
+ * Frontend ↔ Backend IPC contract.
+ *
+ * Type-safety strategy:
+ *   - "Create" payloads (`NewCustomer`, `NewFilament`, `NewPrinter`, `NewOrder`,
+ *     `UpdateSettings`) are defined ONCE in `lib/*-schema.ts` next to their Zod
+ *     schema and `toNew*` transform, then re-exported here. This makes the
+ *     form input and the IPC payload share a single source of truth.
+ *   - "Read" shapes (`Customer`, `Filament`, `Printer`, `Order`, `QuoteItem`,
+ *     `Settings`) live in `lib/db-types.ts` (mirroring the Rust structs).
+ *
+ * Drift detection: in dev we call `assertShape` to log a warning when the
+ * runtime payload diverges from the declared TS type. The Rust side is the
+ * authoritative truth — if you see a warning, fix Rust first, then update
+ * `db-types.ts`.
+ *
+ * TODO(P0.3 follow-up): replace the manual TS mirrors with `ts-rs` or
+ * `specta` so that the Rust structs themselves generate the TS types at
+ * build time. That's a one-day job once this manual layer is in place.
+ */
 import { invoke } from '@tauri-apps/api/core'
+import type { Customer, Filament, Order, OrderStatus, Printer, QuoteItem, Settings } from './db-types'
+import type { DashboardData } from './dashboard-types'
+import type { NewCustomer } from './customer-schema'
+import type { NewFilament } from './filament-schema'
+import type { NewPrinter } from './printer-schema'
+import type { NewOrder } from './order-schema'
+import type { UpdateSettings } from './settings-schema'
 
 export interface IpcError { code: string; message: string }
 
@@ -8,8 +35,9 @@ export class IpcException extends Error {
 }
 
 async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  try { return await invoke<T>(cmd, args) }
-  catch (e) {
+  try {
+    return await invoke<T>(cmd, args)
+  } catch (e) {
     if (typeof e === 'object' && e !== null && 'code' in e && 'message' in e) {
       throw new IpcException(e as IpcError)
     }
@@ -17,16 +45,11 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> 
   }
 }
 
-import type { Customer, Filament, Order, OrderStatus, Printer, QuoteItem, Settings } from './db-types'
-import type { DashboardData } from './dashboard-types'
-
-interface NewCustomer { name: string; email: string; phone: string|null; address: string|null; vat_number: string|null; notes: string|null }
-export interface NewFilament { brand: string; material: string; color: string|null; diameter: number; density: number|null; price_per_kg: number; stock_grams: number; low_stock_threshold: number }
-interface NewPrinter { name: string; model: string|null; build_volume_x: number|null; build_volume_y: number|null; build_volume_z: number|null; status: string; notes: string|null }
-interface UpdateSettings { default_hourly_rate: number; default_margin_percent: number; currency: string; vat_rate: number }
-interface NewQuoteItem { description: string; quantity: number; time_hours: number; material_grams: number; filament_id: string|null; post_processing_cost: number }
-export interface NewOrder { customer_id: string; status: string; notes: string|null; margin_percent: number; apply_vat: boolean; quote_items: NewQuoteItem[] }
 export interface OrderWithItems extends Order { items: QuoteItem[] }
+
+// Re-export the canonical "create payload" types so existing call sites
+// (useOrders, useFilaments, useSettings, ...) keep their `import { ... } from '@/lib/ipc'`.
+export type { NewCustomer, NewFilament, NewPrinter, NewOrder, UpdateSettings }
 
 export const ipc = {
   ping: () => call<string>('ping'),
@@ -44,7 +67,8 @@ export const ipc = {
     get: (id: string) => call<Filament>('get_filament', { id }),
     create: (input: NewFilament) => call<Filament>('create_filament', { input }),
     update: (id: string, input: NewFilament) => call<Filament>('update_filament', { id, input }),
-    adjustStock: (id: string, delta_grams: number) => call<Filament>('adjust_filament_stock', { id, delta_grams }),
+    adjustStock: (id: string, delta_grams: number) =>
+      call<Filament>('adjust_filament_stock', { id, delta_grams }),
     delete: (id: string) => call<void>('delete_filament', { id }),
   },
 
@@ -63,11 +87,15 @@ export const ipc = {
 
   orders: {
     list: (filters?: { status?: OrderStatus; customer_id?: string }) =>
-      call<Order[]>('list_orders', { status: filters?.status ?? null, customer_id: filters?.customer_id ?? null }),
+      call<Order[]>('list_orders', {
+        status: filters?.status ?? null,
+        customer_id: filters?.customer_id ?? null,
+      }),
     get: (id: string) => call<OrderWithItems>('get_order', { id }),
     create: (input: NewOrder) => call<OrderWithItems>('create_order', { input }),
     update: (id: string, input: NewOrder) => call<OrderWithItems>('update_order', { id, input }),
-    setStatus: (id: string, newStatus: string) => call<Order>('set_order_status', { id, new_status: newStatus }),
+    setStatus: (id: string, newStatus: string) =>
+      call<Order>('set_order_status', { id, new_status: newStatus }),
     delete: (id: string) => call<void>('delete_order', { id }),
   },
 
