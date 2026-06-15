@@ -12,12 +12,12 @@ pub fn list_customers(
     customers::list(&state.pool, search.as_deref())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn get_customer(state: State<'_, AppState>, id: String) -> AppResult<Customer> {
     customers::get(&state.pool, &id)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn create_customer(state: State<'_, AppState>, input: NewCustomer) -> AppResult<Customer> {
     customers::create(&state.pool, input)
 }
@@ -31,7 +31,7 @@ pub fn update_customer(
     customers::update(&state.pool, &id, input)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn delete_customer(state: State<'_, AppState>, id: String) -> AppResult<()> {
     customers::soft_delete(&state.pool, &id)
 }

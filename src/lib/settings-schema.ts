@@ -8,3 +8,14 @@ export const settingsFormSchema = z.object({
 })
 
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>
+
+export function toUpdateSettings(v: SettingsFormValues) {
+  return {
+    default_hourly_rate: v.default_hourly_rate,
+    default_margin_percent: v.default_margin_percent,
+    currency: v.currency,
+    vat_rate: v.vat_rate,
+  }
+}
+
+export type UpdateSettings = ReturnType<typeof toUpdateSettings>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import type { UpcomingOrder } from '@/lib/dashboard-types'
 import { StatusBadge } from '@/components/domain/orders/StatusBadge'
@@ -35,7 +35,10 @@ export function UpcomingList({ orders }: UpcomingListProps) {
               <div>
                 <div className="text-sm font-medium text-text-1">{o.customer_name}</div>
                 <div className="text-xs text-text-3">
-                  {format(parseISO(o.created_at), 'dd MMM yyyy', { locale: it })}
+                  {/* SQLite stores created_at as "YYYY-MM-DD HH:MM:SS" (UTC),
+                      which parseISO rejects → Invalid Date → RangeError on format.
+                      Use `new Date(string)` which accepts both SQLite and ISO 8601. */}
+                  {format(new Date(o.created_at), 'dd MMM yyyy', { locale: it })}
                 </div>
               </div>
               <div className="text-right">

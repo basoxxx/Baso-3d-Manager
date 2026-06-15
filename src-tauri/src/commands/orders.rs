@@ -21,13 +21,13 @@ pub fn list_orders(
     orders::list(&state.pool, status.as_deref(), customer_id.as_deref())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn get_order(state: State<'_, AppState>, id: String) -> AppResult<OrderWithItems> {
     let (order, items) = orders::get_with_items(&state.pool, &id)?;
     Ok(OrderWithItems { order, items })
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn create_order(state: State<'_, AppState>, input: NewOrder) -> AppResult<OrderWithItems> {
     let (order, items) = orders::create(&state.pool, input)?;
     Ok(OrderWithItems { order, items })
@@ -52,7 +52,7 @@ pub fn set_order_status(
     orders::set_status(&state.pool, &id, &new_status)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn delete_order(state: State<'_, AppState>, id: String) -> AppResult<()> {
     orders::soft_delete(&state.pool, &id)
 }

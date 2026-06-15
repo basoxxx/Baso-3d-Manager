@@ -3,7 +3,7 @@ use crate::AppState;
 use tauri::State;
 use tauri_plugin_dialog::DialogExt;
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn export_backup(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
@@ -27,7 +27,7 @@ pub async fn export_backup(
     Ok(path.to_string_lossy().to_string())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn import_backup(app: tauri::AppHandle, state: State<'_, AppState>) -> AppResult<()> {
     let path = app
         .dialog()

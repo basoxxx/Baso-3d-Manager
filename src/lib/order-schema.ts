@@ -51,3 +51,5 @@ export function toNewOrder(v: OrderFormValues) {
     })),
   }
 }
+
+export type NewOrder = ReturnType<typeof toNewOrder>

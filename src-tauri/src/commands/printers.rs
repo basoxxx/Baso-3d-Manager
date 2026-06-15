@@ -3,17 +3,17 @@ use crate::repos::printers::{self, NewPrinter, Printer};
 use crate::AppState;
 use tauri::State;
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn list_printers(state: State<'_, AppState>) -> AppResult<Vec<Printer>> {
     printers::list(&state.pool)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn get_printer(state: State<'_, AppState>, id: String) -> AppResult<Printer> {
     printers::get(&state.pool, &id)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn create_printer(state: State<'_, AppState>, input: NewPrinter) -> AppResult<Printer> {
     printers::create(&state.pool, input)
 }
@@ -27,7 +27,7 @@ pub fn update_printer(
     printers::update(&state.pool, &id, input)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn delete_printer(state: State<'_, AppState>, id: String) -> AppResult<()> {
     printers::soft_delete(&state.pool, &id)
 }
