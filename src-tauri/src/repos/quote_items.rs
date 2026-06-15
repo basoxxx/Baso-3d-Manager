@@ -2,6 +2,7 @@ use crate::db::DbPool;
 use crate::error::AppResult;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
+use rusqlite::Transaction;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,9 +55,13 @@ pub fn list_for_order(pool: &DbPool, order_id: &str) -> AppResult<Vec<QuoteItem>
     Ok(rows)
 }
 
-pub fn create_many(pool: &DbPool, order_id: &str, items: &[NewQuoteItem]) -> AppResult<Vec<QuoteItem>> {
-    let mut conn = pool.get()?;
-    let tx = conn.transaction()?;
+/// Insert many quote items inside an existing transaction. The caller is
+/// responsible for committing or rolling back.
+pub fn create_many_in_tx(
+    tx: &Transaction<'_>,
+    order_id: &str,
+    items: &[NewQuoteItem],
+) -> AppResult<Vec<QuoteItem>> {
     let mut created = Vec::with_capacity(items.len());
     for (idx, item) in items.iter().enumerate() {
         let id = Uuid::new_v4().to_string();
@@ -90,10 +95,22 @@ pub fn create_many(pool: &DbPool, order_id: &str, items: &[NewQuoteItem]) -> App
             created_at: chrono::Utc::now().to_rfc3339(),
         });
     }
+    Ok(created)
+}
+
+/// Convenience wrapper for callers that don't already own a transaction.
+/// Opens its own short transaction and commits on success.
+pub fn create_many(pool: &DbPool, order_id: &str, items: &[NewQuoteItem]) -> AppResult<Vec<QuoteItem>> {
+    let mut conn = pool.get()?;
+    let tx = conn.transaction()?;
+    let created = create_many_in_tx(&tx, order_id, items)?;
     tx.commit()?;
     Ok(created)
 }
 
+/// Delete all quote items for an order and re-insert the supplied list, in a
+/// single transaction. If the insert fails, the deletion is rolled back so
+/// the order keeps its previous items untouched.
 pub fn replace_for_order(
     pool: &DbPool,
     order_id: &str,
@@ -102,8 +119,9 @@ pub fn replace_for_order(
     let mut conn = pool.get()?;
     let tx = conn.transaction()?;
     tx.execute("DELETE FROM quote_items WHERE order_id = ?1", params![order_id])?;
+    let created = create_many_in_tx(&tx, order_id, items)?;
     tx.commit()?;
-    create_many(pool, order_id, items)
+    Ok(created)
 }
 
 #[cfg(test)]
@@ -165,5 +183,51 @@ mod tests {
         assert_eq!(created.len(), 3);
         let all = list_for_order(&p, "ord-1").unwrap();
         assert_eq!(all.len(), 3);
+    }
+
+    /// Simulate a failing insert: when something in the middle of the items
+    /// list violates a NOT NULL constraint, the surrounding transaction must
+    /// roll back, leaving the order's previous items untouched.
+    #[test]
+    fn replace_for_order_rolls_back_on_failure() {
+        let p = pool();
+        seed_order(&p, "ord-1");
+        create_many(&p, "ord-1", &[sample_item()]).unwrap();
+        let before = list_for_order(&p, "ord-1").unwrap();
+        assert_eq!(before.len(), 1);
+
+        // Force a failure: an invalid filament_id (foreign key to a row that
+        // does not exist) should be rejected, rolling back the delete.
+        let bogus = vec![NewQuoteItem {
+            description: "will fail".into(),
+            quantity: 1,
+            time_hours: 0.0,
+            material_grams: 0.0,
+            filament_id: Some("00000000-0000-0000-0000-000000000000".into()),
+            post_processing_cost: 0.0,
+        }];
+        let r = replace_for_order(&p, "ord-1", &bogus);
+        assert!(r.is_err(), "expected FK violation");
+
+        // The original item must still be there: rollback worked.
+        let after = list_for_order(&p, "ord-1").unwrap();
+        assert_eq!(after.len(), 1, "previous items lost on rollback");
+        assert_eq!(after[0].description, before[0].description);
+    }
+
+    /// `create_many_in_tx` participates in a caller-owned transaction. If the
+    /// caller aborts, nothing is persisted.
+    #[test]
+    fn create_many_in_tx_rolls_back_when_caller_drops() {
+        let p = pool();
+        seed_order(&p, "ord-2");
+        {
+            let mut conn = p.get().unwrap();
+            let tx = conn.transaction().unwrap();
+            create_many_in_tx(&tx, "ord-2", &[sample_item()]).unwrap();
+            // tx is dropped here without commit
+        }
+        let items = list_for_order(&p, "ord-2").unwrap();
+        assert!(items.is_empty(), "uncommitted tx must not be visible");
     }
 }

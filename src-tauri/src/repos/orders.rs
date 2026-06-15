@@ -125,9 +125,10 @@ pub fn create(pool: &DbPool, input: NewOrder) -> AppResult<(Order, Vec<QuoteItem
             input.apply_vat as i64,
         ],
     )?;
+
+    let items = quote_items::create_many_in_tx(&tx, &id, &input.quote_items)?;
     tx.commit()?;
 
-    let items = quote_items::create_many(pool, &id, &input.quote_items)?;
     let order = get_with_items(pool, &id)?.0;
     Ok((order, items))
 }
@@ -153,10 +154,13 @@ pub fn update(pool: &DbPool, id: &str, input: NewOrder) -> AppResult<(Order, Vec
     if changes == 0 {
         return Err(AppError::NotFound(format!("order {id}")));
     }
+    // delete-then-insert in the same tx: a failing insert rolls back the delete,
+    // so the order keeps its previous items.
+    tx.execute("DELETE FROM quote_items WHERE order_id = ?1", params![id])?;
+    let items = quote_items::create_many_in_tx(&tx, id, &input.quote_items)?;
     tx.commit()?;
 
-    let _ = quote_items::replace_for_order(pool, id, &input.quote_items)?;
-    let (order, items) = get_with_items(pool, id)?;
+    let order = get_with_items(pool, id)?.0;
     Ok((order, items))
 }
 
@@ -372,5 +376,37 @@ mod tests {
         create(&p, sample_order(&cid_b, vec![])).unwrap();
         let only_a = list(&p, None, Some(&cid_a)).unwrap();
         assert_eq!(only_a.len(), 1);
+    }
+
+    /// The order INSERT and the items INSERT must be atomic: if any item
+    /// is rejected (e.g. unknown filament_id via FK), the whole order must
+    /// be rolled back — no orphan order with zero items.
+    #[test]
+    fn create_rolls_back_when_items_fail() {
+        let p = pool();
+        let cid = seed_customer(&p);
+        let before = list(&p, None, None).unwrap().len();
+
+        let bogus = NewOrder {
+            customer_id: cid,
+            status: "draft".into(),
+            notes: None,
+            margin_percent: 40.0,
+            apply_vat: true,
+            quote_items: vec![NewQuoteItem {
+                description: "bogus".into(),
+                quantity: 1,
+                time_hours: 0.0,
+                material_grams: 0.0,
+                filament_id: Some("00000000-0000-0000-0000-000000000000".into()),
+                post_processing_cost: 0.0,
+            }],
+        };
+        let r = create(&p, bogus);
+        assert!(r.is_err(), "expected FK violation on items");
+
+        // The order must not have been persisted: count is unchanged.
+        let after = list(&p, None, None).unwrap().len();
+        assert_eq!(after, before, "order leaked after items failure");
     }
 }
