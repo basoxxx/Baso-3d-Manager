@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "gen:types": "cargo build --manifest-path src-tauri/Cargo.toml",
+    "prebuild": "bun run gen:types",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
