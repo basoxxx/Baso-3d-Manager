@@ -100,6 +100,7 @@ pub fn create_many_in_tx(
 
 /// Convenience wrapper for callers that don't already own a transaction.
 /// Opens its own short transaction and commits on success.
+#[allow(dead_code)]
 pub fn create_many(pool: &DbPool, order_id: &str, items: &[NewQuoteItem]) -> AppResult<Vec<QuoteItem>> {
     let mut conn = pool.get()?;
     let tx = conn.transaction()?;
@@ -111,6 +112,7 @@ pub fn create_many(pool: &DbPool, order_id: &str, items: &[NewQuoteItem]) -> App
 /// Delete all quote items for an order and re-insert the supplied list, in a
 /// single transaction. If the insert fails, the deletion is rolled back so
 /// the order keeps its previous items untouched.
+#[allow(dead_code)]
 pub fn replace_for_order(
     pool: &DbPool,
     order_id: &str,
