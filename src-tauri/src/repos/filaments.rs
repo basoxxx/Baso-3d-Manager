@@ -1,8 +1,11 @@
 use crate::db::DbPool;
 use crate::error::{AppError, AppResult};
 use rusqlite::params;
+use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use super::stock_audit::{self, StockChangeReason};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Filament {
@@ -148,30 +151,116 @@ pub fn update(pool: &DbPool, id: &str, input: NewFilament) -> AppResult<Filament
     get(pool, id)
 }
 
-pub fn adjust_stock(pool: &DbPool, id: &str, delta_grams: f64) -> AppResult<Filament> {
-    let conn = pool.get()?;
-    let changes = conn.execute(
+/// Update stock and record an audit row. The caller owns the
+/// transaction; this function does NOT commit. The audit row is
+/// written in the same transaction so a failure leaves no half-state.
+///
+/// Returns the updated `stock_after` value so the caller can echo
+/// it back (and so we don't have to re-SELECT just to know it).
+pub fn adjust_stock_in_tx(
+    conn: &rusqlite::Connection,
+    id: &str,
+    delta_grams: f64,
+    reason: StockChangeReason,
+    order_id: Option<&str>,
+    user_note: Option<&str>,
+) -> AppResult<Filament> {
+    // Use a single statement: SQLite's `RETURNING` clause gives us
+    // the new value atomically without a second SELECT.
+    let mut stmt = conn.prepare(
         "UPDATE filaments
          SET stock_grams = MAX(0, stock_grams + ?2)
-         WHERE id = ?1 AND deleted_at IS NULL",
-        params![id, delta_grams],
+         WHERE id = ?1 AND deleted_at IS NULL
+         RETURNING stock_grams",
     )?;
-    if changes == 0 {
-        return Err(AppError::NotFound(format!("filament {id}")));
-    }
-    get(pool, id)
+    let new_stock: Option<f64> = stmt
+        .query_row(params![id, delta_grams], |row| row.get::<_, f64>(0))
+        .optional()?;
+    let stock_after = new_stock.ok_or_else(|| AppError::NotFound(format!("filament {id}")))?;
+    // Append the audit row in the same tx.
+    stock_audit::append_in_tx(
+        conn,
+        id,
+        delta_grams,
+        stock_after,
+        reason,
+        order_id,
+        user_note,
+    )?;
+    // Re-read to get the full Filament row (with created_at etc.).
+    let mut stmt = conn.prepare(
+        "SELECT id, brand, material, color, diameter, density, price_per_kg,
+                stock_grams, low_stock_threshold, created_at, deleted_at
+         FROM filaments WHERE id = ?1",
+    )?;
+    let row = stmt
+        .query_row(params![id], |r| {
+            Ok(Filament {
+                id: r.get(0)?,
+                brand: r.get(1)?,
+                material: r.get(2)?,
+                color: r.get(3)?,
+                diameter: r.get(4)?,
+                density: r.get(5)?,
+                price_per_kg: r.get(6)?,
+                stock_grams: r.get(7)?,
+                low_stock_threshold: r.get(8)?,
+                created_at: r.get(9)?,
+                deleted_at: r.get(10)?,
+            })
+        })
+        .map_err(|e| match e {
+            rusqlite::Error::QueryReturnedNoRows => AppError::NotFound(format!("filament {id}")),
+            other => AppError::Db(other),
+        })?;
+    Ok(row)
 }
 
-pub fn adjust_stock_internal(pool: &DbPool, id: &str, delta: f64) -> AppResult<Filament> {
-    let conn = pool.get()?;
-    let changes = conn.execute(
-        "UPDATE filaments SET stock_grams = MAX(0, stock_grams + ?2) WHERE id = ?1 AND deleted_at IS NULL",
-        params![id, delta],
+/// Public entry point used by the IPC command `adjust_filament_stock`.
+/// The user clicks ±100g in the UI; this is a manual adjustment with
+/// no order attached. Opens its own short transaction.
+pub fn adjust_stock(pool: &DbPool, id: &str, delta_grams: f64) -> AppResult<Filament> {
+    let mut conn = pool.get()?;
+    let tx = conn.transaction()?;
+    let row = adjust_stock_in_tx(
+        &tx,
+        id,
+        delta_grams,
+        StockChangeReason::ManualAdjust,
+        None,
+        None,
     )?;
-    if changes == 0 {
-        return Err(AppError::NotFound(format!("filament {id}")));
-    }
-    get(pool, id)
+    tx.commit()?;
+    Ok(row)
+}
+
+/// Internal helper kept for backward compatibility. New callers
+    /// should use `adjust_stock_in_tx` inside their own transaction.
+    #[allow(dead_code)]
+    /// Internal helper used by `orders::set_status` when moving to
+/// in_produzione (or reverting). The call site owns the transaction
+/// so the per-item decrement and its audit row are atomic with the
+/// order status update.
+pub fn adjust_stock_internal(
+    pool: &DbPool,
+    id: &str,
+    delta: f64,
+) -> AppResult<Filament> {
+    // Deprecated: prefer adjust_stock_in_tx inside the caller's tx.
+    // Kept for backward compatibility with the old single-tx
+    // code path; opens its own tx.
+    let mut conn = pool.get()?;
+    let tx = conn.transaction()?;
+    let row = adjust_stock_in_tx(
+        &tx,
+        id,
+        delta,
+        StockChangeReason::Correction,
+        None,
+        Some("legacy adjust_stock_internal call"),
+    )?;
+    tx.commit()?;
+    Ok(row)
 }
 
 pub fn soft_delete(pool: &DbPool, id: &str) -> AppResult<()> {

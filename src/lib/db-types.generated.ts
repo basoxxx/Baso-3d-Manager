@@ -82,6 +82,17 @@ export interface Settings {
   updated_at: string
 }
 
+export interface StockAuditEntry {
+  id: string
+  filament_id: string
+  delta_grams: number
+  stock_after: number
+  reason: string
+  order_id: string | null
+  user_note: string | null
+  created_at: string
+}
+
 export interface DashboardData {
   kpis: Kpis
   revenue_30d: DailyTotal[]

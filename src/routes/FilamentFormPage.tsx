@@ -6,6 +6,8 @@ import { toast } from 'sonner'
 import { ArrowLeft } from 'lucide-react'
 import { filamentFormSchema, emptyFilamentForm, toNewFilament, FILAMENT_MATERIALS, type FilamentFormValues } from '@/lib/filament-schema'
 import { useFilament, useCreateFilament, useUpdateFilament } from '@/hooks/useFilaments'
+import { useStockAudit } from '@/hooks/useStockAudit'
+import { StockAuditList } from '@/components/filaments/StockAuditList'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -16,6 +18,7 @@ export function FilamentFormPage() {
   const navigate = useNavigate()
 
   const { data: existing, isLoading } = useFilament(id)
+  const { data: audit = [] } = useStockAudit({ filament_id: id, limit: 50 })
   const createMut = useCreateFilament()
   const updateMut = useUpdateFilament(id ?? '')
 
@@ -115,6 +118,20 @@ export function FilamentFormPage() {
           </>
         )}
       </form>
+
+      {isEdit && (
+        <section className="mx-auto max-w-2xl space-y-3 p-6 pt-0">
+          <h2 className="text-sm font-semibold text-text-1">
+            Variazioni di magazzino
+          </h2>
+          <p className="text-xs text-text-3">
+            Cronologia di tutti i movimenti di stock registrati per questo
+            filamento: aggiustamenti manuali, decrementi automatici per
+            ordini in produzione, ripristini per annullamento, rifornimenti.
+          </p>
+          <StockAuditList entries={audit} />
+        </section>
+      )}
     </div>
   )
 }

@@ -1,10 +1,10 @@
-mod backup;
+pub mod backup;
 mod commands;
-mod csv_export;
-mod db;
-mod error;
-mod paths;
-mod repos;
+pub mod csv_export;
+pub mod db;
+pub mod error;
+pub mod paths;
+pub mod repos;
 
 use db::DbPool;
 use error::AppResult;
@@ -80,6 +80,7 @@ pub fn run() {
             commands::quote_items::list_quote_items,
             commands::dashboard::get_dashboard,
             commands::export::export_csv,
+            commands::stock_audit::list_stock_audit,
             commands::backup::export_backup,
             commands::backup::import_backup,
         ])
