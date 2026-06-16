@@ -50,7 +50,10 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
-          releaseBody: 'See CHANGELOG.md for details.'
+          releaseBody: |
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md) for the full list of changes.
+            Download the macOS DMG (Apple Silicon / Intel) or the Windows installer from the assets below.
+            Report issues: https://github.com/${{ github.repository }}/issues
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
