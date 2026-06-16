@@ -14,7 +14,7 @@ import { buildStaticCommands } from './useCommands'
 vi.mock('@/lib/ipc', () => ({
   ipc: {
     exportData: {
-      csv: vi.fn(async () => '/tmp/orders.csv'),
+      csv: vi.fn(async (_domain: string) => '/tmp/out.csv'),
       backup: vi.fn(async () => '/tmp/baso.zip'),
     },
   },
@@ -37,6 +37,11 @@ describe('buildStaticCommands', () => {
   it('includes all 4 groups', () => {
     const groups = new Set(commands().map((c) => c.group))
     expect(groups).toEqual(new Set(['Navigazione', 'Crea', 'Azioni']))
+  })
+
+  it('exposes 5 quick actions (3 csv + backup + 0 nav)', () => {
+    const actions = commands().filter((c) => c.group === 'Azioni')
+    expect(actions).toHaveLength(5)
   })
 
   it('exposes one navigation command per route', () => {
@@ -84,6 +89,18 @@ describe('buildStaticCommands', () => {
     const c = commands().find((x) => x.id === 'action.export_filaments_csv')!
     await c.perform()
     expect(ipc.exportData.csv).toHaveBeenCalledWith('filaments')
+  })
+
+  it('invokes ipc.exportData.csv("customers") for the customer export', async () => {
+    const c = commands().find((x) => x.id === 'action.export_customers_csv')!
+    await c.perform()
+    expect(ipc.exportData.csv).toHaveBeenCalledWith('customers')
+  })
+
+  it('invokes ipc.exportData.csv("printers") for the printer export', async () => {
+    const c = commands().find((x) => x.id === 'action.export_printers_csv')!
+    await c.perform()
+    expect(ipc.exportData.csv).toHaveBeenCalledWith('printers')
   })
 
   it('invokes ipc.exportData.backup() for the backup action', async () => {
