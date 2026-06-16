@@ -1,5 +1,7 @@
 # BASO 3D Manager
 
+**Versione 0.3.0** (2026-06-15) — vedi [CHANGELOG](./CHANGELOG.md). Include ⌘K palette, audit log stock, dashboard alerts, stampa PDF, duplica ordine, notifiche in-app.
+
 Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), offline-first, basato su Tauri 2 + React + SQLite.
 
 ## Features
@@ -14,6 +16,14 @@ Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), 
 - Auto-update via GitHub Releases
 - 🔔 **Centro notifiche in-app** — campanella in topbar con badge, pannello a tendina con lista notifiche, dismiss + segna come letto, e generazione automatica da alert dashboard (filamenti bassi, ordini in ritardo)
 - Dark mode
+
+## Test
+
+- **79 test Rust** (cargo test) — copertura: migrations, repos (customers, filaments, printers, orders, quote_items, settings, stock_audit, notifications), commands (dashboard, export, csv_export), build script pinning
+- **141 test TypeScript** (vitest) — copertura: schemi Zod, contract IPC, react-hook-form flow, palette comandi, StockAuditList, NotificationBell, useDashboardAlerts, quote-format
+- **CI matrix** (GitHub Actions) — `bunx tsc --noEmit` + `bunx vitest run` + `cargo test` ad ogni PR
+- **0 warning** nel tree principale
+- **CSP stretta** — `default-src 'self'`, no remote script
 
 ## Requisiti di sviluppo
 
