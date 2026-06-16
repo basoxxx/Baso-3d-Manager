@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { PageHeader } from '@/components/layout/PageHeader'
 
-type Action = null | 'csv-orders' | 'csv-filaments' | 'backup-export' | 'backup-import'
+type Action = null | 'csv-orders' | 'csv-filaments' | 'csv-customers' | 'csv-printers' | 'backup-export' | 'backup-import'
 
 export function BackupPage() {
   const [busy, setBusy] = useState<Action>(null)
@@ -30,6 +30,8 @@ export function BackupPage() {
 
   const exportOrdersCsv = () => run('csv-orders', () => ipc.exportData.csv('orders'), () => 'CSV ordini salvato')
   const exportFilamentsCsv = () => run('csv-filaments', () => ipc.exportData.csv('filaments'), () => 'CSV filamenti salvato')
+  const exportCustomersCsv = () => run('csv-customers', () => ipc.exportData.csv('customers'), () => 'CSV clienti salvato')
+  const exportPrintersCsv = () => run('csv-printers', () => ipc.exportData.csv('printers'), () => 'CSV stampanti salvato')
   const exportBackup = () => run('backup-export', () => ipc.exportData.backup(), () => 'Backup salvato')
   const importBackup = () => run('backup-import', () => ipc.exportData.restore(), () => 'Backup ripristinato')
 
@@ -49,7 +51,7 @@ export function BackupPage() {
             <div className="flex-1">
               <h3 className="text-sm font-medium text-text-1">Esporta CSV</h3>
               <p className="mt-1 text-xs text-text-3">
-                Esporta gli ordini o i filamenti in formato CSV (Excel compatibile, separatore italiano)
+                Esporta clienti, ordini, filamenti o stampanti in formato CSV (Excel compatibile, separatore italiano)
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
@@ -69,6 +71,24 @@ export function BackupPage() {
                 >
                   {busy === 'csv-filaments' ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                   Esporta filamenti
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={exportCustomersCsv}
+                  disabled={busy !== null}
+                >
+                  {busy === 'csv-customers' ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                  Esporta clienti
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={exportPrintersCsv}
+                  disabled={busy !== null}
+                >
+                  {busy === 'csv-printers' ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                  Esporta stampanti
                 </Button>
               </div>
             </div>

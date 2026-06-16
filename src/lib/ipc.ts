@@ -108,7 +108,7 @@ export const ipc = {
   },
 
   exportData: {
-    csv: (domain: 'orders' | 'filaments') =>
+    csv: (domain: 'orders' | 'filaments' | 'customers' | 'printers') =>
       call<string>('export_csv', { domain }),
     backup: () => call<string>('export_backup'),
     restore: () => call<void>('import_backup'),
