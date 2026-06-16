@@ -86,6 +86,8 @@ export interface DashboardData {
   kpis: Kpis
   revenue_30d: DailyTotal[]
   upcoming: UpcomingOrder[]
+  low_stock: LowStockFilament[]
+  overdue: OverdueOrder[]
 }
 
 export interface Kpis {
@@ -93,6 +95,8 @@ export interface Kpis {
   month_revenue: number
   total_customers: number
   kg_consumed_month: number
+  low_stock_filaments: number
+  overdue_orders: number
 }
 
 export interface DailyTotal {
@@ -107,5 +111,23 @@ export interface UpcomingOrder {
   status: string
   created_at: string
   total: number
+}
+
+export interface LowStockFilament {
+  id: string
+  brand: string
+  material: string
+  color: string | null
+  stock_grams: number
+  low_stock_threshold: number
+}
+
+export interface OverdueOrder {
+  id: string
+  customer_id: string
+  customer_name: string
+  status: string
+  created_at: string
+  days_old: number
 }
 

@@ -17,6 +17,8 @@ const EXPORTED_STRUCTS: &[(&str, &str)] = &[
     ("commands::dashboard::Kpis", "src/commands/dashboard.rs"),
     ("commands::dashboard::DailyTotal", "src/commands/dashboard.rs"),
     ("commands::dashboard::UpcomingOrder", "src/commands/dashboard.rs"),
+    ("commands::dashboard::LowStockFilament", "src/commands/dashboard.rs"),
+    ("commands::dashboard::OverdueOrder", "src/commands/dashboard.rs"),
 ];
 
 /// Hand-curated narrowings for fields that are typed as `String` in Rust
