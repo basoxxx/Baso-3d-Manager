@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useReactTable, getCoreRowModel, getSortedRowModel, type ColumnDef } from '@tanstack/react-table'
-import { Plus, Pencil, Trash2, Eye, Download } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, Download, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { useOrders, useDeleteOrder, useSetOrderStatus, type Order } from '@/hooks/useOrders'
 import { ORDER_STATUSES } from '@/lib/order-schema'
@@ -81,6 +81,13 @@ export function OrdersPage() {
             title="Modifica"
           >
             <Pencil size={14} />
+          </button>
+          <button
+            onClick={() => navigate(`/orders/new?from=${row.original.id}`)}
+            className="rounded p-1.5 text-text-3 hover:bg-bg-2 hover:text-accent"
+            title="Duplica"
+          >
+            <Copy size={14} />
           </button>
           <button
             onClick={() => setToDelete(row.original)}
