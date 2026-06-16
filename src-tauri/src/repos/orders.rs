@@ -168,35 +168,66 @@ pub fn set_status(pool: &DbPool, id: &str, new_status: &str) -> AppResult<Order>
     if !STATUSES.contains(&new_status) {
         return Err(AppError::Validation(format!("invalid status: {new_status}")));
     }
-    let conn = pool.get()?;
     let (order, items) = get_with_items(pool, id)?;
-    if order.status == "draft" && new_status == "in_produzione" {
+    let mut conn = pool.get()?;
+    let tx = conn.transaction()?;
+
+    // --- Stock side-effects (atomic with the status change) ---------
+    //
+    // draft -> in_produzione: decrement stock for each item that has
+    //   a real filament assigned. Each decrement is a row in
+    //   stock_audit_log (reason = order_production).
+    //
+    // in_produzione -> draft (revert): restore the same amount.
+    //   reason = order_revert.
+    //
+    // Other transitions: no stock change.
+    let stock_reason = match (order.status.as_str(), new_status) {
+        ("draft", "in_produzione") => Some((
+            super::stock_audit::StockChangeReason::OrderProduction,
+            -1.0_f64,
+        )),
+        ("in_produzione", "draft") => Some((
+            super::stock_audit::StockChangeReason::OrderRevert,
+            1.0,
+        )),
+        _ => None,
+    };
+
+    if let Some((reason, sign)) = stock_reason {
         for item in items {
-            // Skip items without a real filament assigned (None or empty string)
             let Some(fid) = item.filament_id.as_deref().filter(|s| !s.is_empty()) else {
                 continue;
             };
             if item.material_grams > 0.0 && item.quantity > 0 {
-                // Best-effort stock decrement. If the filament was soft-deleted
-                // or the row vanished, log and continue — don't block the status
-                // transition (a user can still want to mark an old order as
-                // "in production" even if its filament is gone).
-                if let Err(e) = super::filaments::adjust_stock_internal(
-                    pool, fid, -item.material_grams * (item.quantity as f64),
+                let delta = sign * item.material_grams * (item.quantity as f64);
+                // Best-effort. If the filament was soft-deleted or the row
+                // vanished, log and continue — don't block the status
+                // transition (a user can still want to mark an old order
+                // as in_produzione even if its filament is gone).
+                if let Err(e) = super::filaments::adjust_stock_in_tx(
+                    &tx, fid, delta, reason, Some(id), None,
                 ) {
-                    tracing::warn!(order_id = %id, filament_id = %fid, error = %e, "stock decrement skipped");
+                    tracing::warn!(
+                        order_id = %id, filament_id = %fid, error = %e,
+                        "stock adjustment skipped"
+                    );
                 }
             }
         }
     }
-    let changes = conn.execute(
+
+    // --- Order status update (atomic with the stock changes) -------
+    let changes = tx.execute(
         "UPDATE orders SET status = ?2, updated_at = datetime('now')
          WHERE id = ?1 AND deleted_at IS NULL",
-        params![id, new_status],
+        rusqlite::params![id, new_status],
     )?;
     if changes == 0 {
         return Err(AppError::NotFound(format!("order {id}")));
     }
+    tx.commit()?;
+
     let (order, _) = get_with_items(pool, id)?;
     Ok(order)
 }

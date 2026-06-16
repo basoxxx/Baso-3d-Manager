@@ -25,6 +25,7 @@ import type { NewCustomer } from './customer-schema'
 import type { NewFilament } from './filament-schema'
 import type { NewPrinter } from './printer-schema'
 import type { NewOrder } from './order-schema'
+import type { StockAuditEntry } from './db-types.generated'
 import type { UpdateSettings } from './settings-schema'
 
 export interface IpcError { code: string; message: string }
@@ -49,7 +50,7 @@ export interface OrderWithItems extends Order { items: QuoteItem[] }
 
 // Re-export the canonical "create payload" types so existing call sites
 // (useOrders, useFilaments, useSettings, ...) keep their `import { ... } from '@/lib/ipc'`.
-export type { NewCustomer, NewFilament, NewPrinter, NewOrder, UpdateSettings }
+export type { NewCustomer, NewFilament, NewPrinter, NewOrder, UpdateSettings, StockAuditEntry }
 
 export const ipc = {
   ping: () => call<string>('ping'),
@@ -101,6 +102,14 @@ export const ipc = {
 
   quoteItems: {
     list: (orderId: string) => call<QuoteItem[]>('list_quote_items', { orderId }),
+  },
+
+  stockAudit: {
+    list: (opts?: { filament_id?: string; limit?: number }) =>
+      call<StockAuditEntry[]>('list_stock_audit', {
+        filament_id: opts?.filament_id ?? null,
+        limit: opts?.limit ?? null,
+      }),
   },
 
   dashboard: {

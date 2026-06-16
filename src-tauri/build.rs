@@ -13,6 +13,7 @@ const EXPORTED_STRUCTS: &[(&str, &str)] = &[
     ("repos::orders::Order", "src/repos/orders.rs"),
     ("repos::quote_items::QuoteItem", "src/repos/quote_items.rs"),
     ("repos::settings::Settings", "src/repos/settings.rs"),
+    ("repos::stock_audit::StockAuditEntry", "src/repos/stock_audit.rs"),
     ("commands::dashboard::DashboardData", "src/commands/dashboard.rs"),
     ("commands::dashboard::Kpis", "src/commands/dashboard.rs"),
     ("commands::dashboard::DailyTotal", "src/commands/dashboard.rs"),

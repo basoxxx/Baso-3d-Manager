@@ -11,6 +11,7 @@ pub mod migrations {
     pub const ENTRIES: &[(&str, &str)] = &[
         ("001_initial_schema", include_str!("migrations/001_initial_schema.sql")),
         ("002_orders_apply_vat", include_str!("migrations/002_orders_apply_vat.sql")),
+        ("003_stock_audit_log", include_str!("migrations/003_stock_audit_log.sql")),
     ];
 }
 
@@ -211,7 +212,11 @@ mod tests {
             .collect();
         assert_eq!(
             applied,
-            vec!["001_initial_schema".to_string(), "002_orders_apply_vat".to_string()]
+            vec![
+                "001_initial_schema".to_string(),
+                "002_orders_apply_vat".to_string(),
+                "003_stock_audit_log".to_string(),
+            ]
         );
         let _ = std::fs::remove_file(&path);
     }
@@ -245,7 +250,11 @@ mod tests {
             .collect();
         assert_eq!(
             applied,
-            vec!["001_initial_schema".to_string(), "002_orders_apply_vat".to_string()]
+            vec![
+                "001_initial_schema".to_string(),
+                "002_orders_apply_vat".to_string(),
+                "003_stock_audit_log".to_string(),
+            ]
         );
 
         // The legacy v2 ALTER must not have been re-run.
