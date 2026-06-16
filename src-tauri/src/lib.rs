@@ -81,6 +81,12 @@ pub fn run() {
             commands::dashboard::get_dashboard,
             commands::export::export_csv,
             commands::stock_audit::list_stock_audit,
+            commands::notifications::list_notifications,
+            commands::notifications::push_notification,
+            commands::notifications::mark_notification_read,
+            commands::notifications::mark_all_notifications_read,
+            commands::notifications::delete_notification,
+            commands::notifications::unread_notification_count,
             commands::backup::export_backup,
             commands::backup::import_backup,
         ])

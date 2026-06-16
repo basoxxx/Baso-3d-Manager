@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useDashboard } from '@/hooks/useDashboard'
+import { useDashboardAlerts } from '@/hooks/useDashboardAlerts'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { RevenueChart } from '@/components/dashboard/RevenueChart'
 import { UpcomingList } from '@/components/dashboard/UpcomingList'
@@ -17,6 +18,7 @@ import { OverdueList } from '@/components/dashboard/OverdueList'
 
 export function DashboardPage() {
   const { data, isLoading } = useDashboard()
+  useDashboardAlerts()
   const kpis = data?.kpis
 
   return (

@@ -12,6 +12,7 @@ pub mod migrations {
         ("001_initial_schema", include_str!("migrations/001_initial_schema.sql")),
         ("002_orders_apply_vat", include_str!("migrations/002_orders_apply_vat.sql")),
         ("003_stock_audit_log", include_str!("migrations/003_stock_audit_log.sql")),
+        ("004_notifications", include_str!("migrations/004_notifications.sql")),
     ];
 }
 
@@ -216,6 +217,7 @@ mod tests {
                 "001_initial_schema".to_string(),
                 "002_orders_apply_vat".to_string(),
                 "003_stock_audit_log".to_string(),
+                "004_notifications".to_string(),
             ]
         );
         let _ = std::fs::remove_file(&path);
@@ -254,6 +256,7 @@ mod tests {
                 "001_initial_schema".to_string(),
                 "002_orders_apply_vat".to_string(),
                 "003_stock_audit_log".to_string(),
+                "004_notifications".to_string(),
             ]
         );
 

@@ -12,6 +12,7 @@ Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), 
 - 🖨️ **Stampa / PDF del preventivo** — il pulsante nel form apre un'anteprima con numero, totale e layout pulito, stampabile dal browser o salvabile come PDF (zero dipendenze extra) (UTF-8 BOM, separatore `;`, date `dd/mm/yyyy`, compatibile Excel IT)
 - Backup/ripristino ZIP
 - Auto-update via GitHub Releases
+- 🔔 **Centro notifiche in-app** — campanella in topbar con badge, pannello a tendina con lista notifiche, dismiss + segna come letto, e generazione automatica da alert dashboard (filamenti bassi, ordini in ritardo)
 - Dark mode
 
 ## Requisiti di sviluppo
