@@ -7,7 +7,7 @@ Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), 
 - Gestione clienti, ordini, preventivi con calcolo prezzi live
 - Magazzino filamenti con alert scorte basse
 - Configurazione stampanti e parametri globali
-- Dashboard con KPI e grafico fatturato
+- Dashboard con KPI (ordini attivi, fatturato 30gg, clienti, kg consumati, **filamenti sotto soglia**, **ordini in ritardo**) + grafico fatturato + pannelli "Da evadere", "Da riordinare", "In ritardo > 14gg"
 - Export CSV (Excel IT compatibile)
 - Backup/ripristino ZIP
 - Auto-update via GitHub Releases
