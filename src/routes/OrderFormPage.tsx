@@ -1,10 +1,16 @@
 import { useEffect } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { useFieldArray, useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { ArrowLeft, Plus, Save } from 'lucide-react'
-import { orderFormSchema, emptyQuoteItem, toNewOrder, type OrderFormValues } from '@/lib/order-schema'
+import { ArrowLeft, Copy, Plus, Save } from 'lucide-react'
+import {
+  orderFormSchema,
+  emptyQuoteItem,
+  toNewOrder,
+  fromOrderForDuplicate,
+  type OrderFormValues,
+} from '@/lib/order-schema'
 import { useOrder, useCreateOrder, useUpdateOrder } from '@/hooks/useOrders'
 import { useSettings } from '@/hooks/useSettings'
 import { Button } from '@/components/ui/Button'
@@ -20,11 +26,18 @@ export function OrderFormPage() {
   const { id } = useParams<{ id?: string }>()
   const isEdit = !!id
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const duplicateFrom = searchParams.get('from') ?? undefined
 
+  // Resolve the order being duplicated, if any. We use the same useOrder
+  // hook as the edit flow so the data shape is consistent.
+  const { data: sourceOrder, isLoading: isLoadingSource } = useOrder(duplicateFrom)
   const { data: existing, isLoading } = useOrder(id)
   const { data: settings } = useSettings()
   const createMut = useCreateOrder()
   const updateMut = useUpdateOrder(id ?? '')
+
+  const isDuplicating = !!duplicateFrom
 
   const methods = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
@@ -42,25 +55,41 @@ export function OrderFormPage() {
   const { fields, append, remove } = useFieldArray({ control, name: 'quote_items' })
 
   useEffect(() => {
-    if (existing) {
-      reset({
-        customer_id: existing.customer_id,
-        status: existing.status as OrderFormValues['status'],
-        notes: existing.notes ?? '',
-        margin_percent: existing.margin_percent,
-        apply_vat: existing.apply_vat ?? true,
-        quote_items: existing.items.length > 0
-          ? existing.items.map((i) => ({
-              description: i.description,
-              quantity: i.quantity,
-              time_hours: i.time_hours,
-              material_grams: i.material_grams,
-              filament_id: i.filament_id,
-              post_processing_cost: i.post_processing_cost,
-            }))
-          : [emptyQuoteItem],
-      })
-    } else if (settings) {
+    // Edit flow: load the existing order into the form.
+    if (isEdit) {
+      if (existing) {
+        reset({
+          customer_id: existing.customer_id,
+          status: existing.status as OrderFormValues['status'],
+          notes: existing.notes ?? '',
+          margin_percent: existing.margin_percent,
+          apply_vat: existing.apply_vat ?? true,
+          quote_items: existing.items.length > 0
+            ? existing.items.map((i) => ({
+                description: i.description,
+                quantity: i.quantity,
+                time_hours: i.time_hours,
+                material_grams: i.material_grams,
+                filament_id: i.filament_id,
+                post_processing_cost: i.post_processing_cost,
+              }))
+            : [emptyQuoteItem],
+        })
+      }
+      return
+    }
+
+    // Duplicate flow: pre-fill from the source order, status -> draft.
+    if (isDuplicating) {
+      if (sourceOrder) {
+        reset(fromOrderForDuplicate(sourceOrder))
+        toast.info('Ordine duplicato in bozza. Modifica e salva per creare una copia indipendente.')
+      }
+      return
+    }
+
+    // Create flow: load default margin from settings.
+    if (settings) {
       reset({
         customer_id: '',
         status: 'draft',
@@ -70,7 +99,7 @@ export function OrderFormPage() {
         quote_items: [emptyQuoteItem],
       })
     }
-  }, [existing, settings, reset])
+  }, [isEdit, isDuplicating, existing, sourceOrder, settings, reset])
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -79,7 +108,7 @@ export function OrderFormPage() {
         toast.success('Ordine aggiornato')
       } else {
         await createMut.mutateAsync(toNewOrder(values))
-        toast.success('Ordine creato')
+        toast.success(isDuplicating ? 'Ordine duplicato creato' : 'Ordine creato')
       }
       navigate('/orders')
     } catch (e) { toast.error(String(e)) }
@@ -87,20 +116,42 @@ export function OrderFormPage() {
 
   const submitting = createMut.isPending || updateMut.isPending
 
+  const pageTitle = isEdit
+    ? 'Modifica ordine'
+    : isDuplicating
+      ? 'Duplica ordine'
+      : 'Nuovo ordine'
+  const pageDescription = isDuplicating
+    ? 'Pre-compilato da un ordine esistente. Lo stato è stato reimpostato a "Bozza".'
+    : undefined
+
   return (
     <FormProvider {...methods}>
       <div>
         <PageHeader
-          title={isEdit ? 'Modifica ordine' : 'Nuovo ordine'}
+          title={pageTitle}
+          description={pageDescription}
           actions={
-            <Link to="/orders">
-              <Button variant="ghost" size="sm"><ArrowLeft size={14} /> Torna alla lista</Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              {isEdit && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigate(`/orders/new?from=${id}`)}
+                >
+                  <Copy size={14} /> Duplica
+                </Button>
+              )}
+              <Link to="/orders">
+                <Button variant="ghost" size="sm"><ArrowLeft size={14} /> Torna alla lista</Button>
+              </Link>
+            </div>
           }
         />
 
         <form onSubmit={onSubmit}>
-          {isLoading && isEdit ? (
+          {(isLoading && isEdit) || (isLoadingSource && isDuplicating) ? (
             <div className="space-y-2 p-6">
               {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded-md bg-bg-1" />)}
             </div>
@@ -184,7 +235,11 @@ export function OrderFormPage() {
                   loading={submitting}
                   disabled={!isDirty && isEdit}
                 >
-                  <Save size={14} /> {isEdit ? 'Salva modifiche' : 'Crea ordine'}
+                  {isDuplicating ? (
+                    <><Copy size={14} /> Crea copia</>
+                  ) : (
+                    <><Save size={14} /> {isEdit ? 'Salva modifiche' : 'Crea ordine'}</>
+                  )}
                 </Button>
               </div>
             </div>
@@ -195,5 +250,4 @@ export function OrderFormPage() {
   )
 }
 
-// Controller import for inline use
 import { Controller } from 'react-hook-form'
