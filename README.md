@@ -8,7 +8,8 @@ Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), 
 - Magazzino filamenti con alert scorte basse
 - Configurazione stampanti e parametri globali
 - Dashboard con KPI (ordini attivi, fatturato 30gg, clienti, kg consumati, **filamenti sotto soglia**, **ordini in ritardo**) + grafico fatturato + pannelli "Da evadere", "Da riordinare", "In ritardo > 14gg"
-- Export CSV per **clienti, ordini, filamenti, stampanti** (UTF-8 BOM, separatore `;`, date `dd/mm/yyyy`, compatibile Excel IT)
+- Export CSV per **clienti, ordini, filamenti, stampanti**
+- 🖨️ **Stampa / PDF del preventivo** — il pulsante nel form apre un'anteprima con numero, totale e layout pulito, stampabile dal browser o salvabile come PDF (zero dipendenze extra) (UTF-8 BOM, separatore `;`, date `dd/mm/yyyy`, compatibile Excel IT)
 - Backup/ripristino ZIP
 - Auto-update via GitHub Releases
 - Dark mode
