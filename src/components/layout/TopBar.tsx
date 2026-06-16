@@ -1,5 +1,6 @@
 import { Search } from 'lucide-react'
 import { UpdateIndicator } from './UpdateIndicator'
+import { NotificationBell } from '@/components/notifications'
 
 interface TopBarProps {
   onOpenPalette: () => void
@@ -19,6 +20,7 @@ export function TopBar({ onOpenPalette }: TopBarProps) {
         <kbd className="ml-auto rounded border border-border bg-bg-1 px-1.5 text-[10px] text-text-2">⌘K</kbd>
       </button>
       <div className="ml-auto flex items-center gap-3">
+        <NotificationBell />
         <UpdateIndicator />
       </div>
     </header>

@@ -93,6 +93,16 @@ export interface StockAuditEntry {
   created_at: string
 }
 
+export interface Notification {
+  id: string
+  kind: string
+  title: string
+  body: string
+  data: unknown | null
+  read: boolean
+  created_at: string
+}
+
 export interface DashboardData {
   kpis: Kpis
   revenue_30d: DailyTotal[]

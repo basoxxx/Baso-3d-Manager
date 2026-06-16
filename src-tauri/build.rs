@@ -14,6 +14,7 @@ const EXPORTED_STRUCTS: &[(&str, &str)] = &[
     ("repos::quote_items::QuoteItem", "src/repos/quote_items.rs"),
     ("repos::settings::Settings", "src/repos/settings.rs"),
     ("repos::stock_audit::StockAuditEntry", "src/repos/stock_audit.rs"),
+    ("commands::notifications::Notification", "src/commands/notifications.rs"),
     ("commands::dashboard::DashboardData", "src/commands/dashboard.rs"),
     ("commands::dashboard::Kpis", "src/commands/dashboard.rs"),
     ("commands::dashboard::DailyTotal", "src/commands/dashboard.rs"),
@@ -169,6 +170,10 @@ fn type_to_ts(ty: &Type, parent: &str, field: &str) -> String {
                     }
                     "unknown[]".into()
                 }
+                // serde_json::Value: arbitrary JSON, model as `unknown` so
+                // the frontend can parse it as `any` without a custom
+                // type.
+                "Value" => "unknown".into(),
                 // Foreign type (chrono, uuid, etc.) — fall back to string for safety.
                 other => {
                     if is_known_primitive(other) {

@@ -33,3 +33,19 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     dispatchEvent: () => false,
   })
 }
+
+
+// jsdom doesn't expose localStorage by default; some tests use it
+// for the dashboard alert hook.
+if (typeof globalThis.localStorage === 'undefined') {
+  const store = new Map<string, string>()
+  const ls = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => void store.clear(),
+    key: (i: number) => Array.from(store.keys())[i] ?? null,
+    get length() { return store.size },
+  }
+  globalThis.localStorage = ls
+}

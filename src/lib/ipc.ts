@@ -25,7 +25,7 @@ import type { NewCustomer } from './customer-schema'
 import type { NewFilament } from './filament-schema'
 import type { NewPrinter } from './printer-schema'
 import type { NewOrder } from './order-schema'
-import type { StockAuditEntry } from './db-types.generated'
+import type { Notification, StockAuditEntry } from './db-types.generated'
 import type { UpdateSettings } from './settings-schema'
 
 export interface IpcError { code: string; message: string }
@@ -50,7 +50,7 @@ export interface OrderWithItems extends Order { items: QuoteItem[] }
 
 // Re-export the canonical "create payload" types so existing call sites
 // (useOrders, useFilaments, useSettings, ...) keep their `import { ... } from '@/lib/ipc'`.
-export type { NewCustomer, NewFilament, NewPrinter, NewOrder, UpdateSettings, StockAuditEntry }
+export type { NewCustomer, NewFilament, NewPrinter, NewOrder, UpdateSettings, StockAuditEntry, Notification }
 
 export const ipc = {
   ping: () => call<string>('ping'),
@@ -110,6 +110,24 @@ export const ipc = {
         filament_id: opts?.filament_id ?? null,
         limit: opts?.limit ?? null,
       }),
+  },
+
+  notifications: {
+    list: (opts?: { unread_only?: boolean; limit?: number }) =>
+      call<Notification[]>('list_notifications', {
+        unread_only: opts?.unread_only ?? null,
+        limit: opts?.limit ?? null,
+      }),
+    push: (input: {
+      kind: 'overdue_order' | 'low_stock' | 'app_update_available' | 'backup_ok' | 'error'
+      title: string
+      body: string
+      data?: unknown
+    }) => call<Notification>('push_notification', { input }),
+    markRead: (id: string) => call<void>('mark_notification_read', { id }),
+    markAllRead: () => call<void>('mark_all_notifications_read'),
+    delete: (id: string) => call<void>('delete_notification', { id }),
+    unreadCount: () => call<number>('unread_notification_count'),
   },
 
   dashboard: {
