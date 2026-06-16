@@ -1,9 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { useFieldArray, useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { ArrowLeft, Copy, Plus, Save } from 'lucide-react'
+import { ArrowLeft, Copy, Plus, Printer, Save } from 'lucide-react'
 import {
   orderFormSchema,
   emptyQuoteItem,
@@ -21,6 +21,7 @@ import { CustomerPicker } from '@/components/domain/orders/CustomerPicker'
 import { QuoteItemRow } from '@/components/domain/orders/QuoteItemRow'
 import { PriceSummary } from '@/components/domain/orders/PriceSummary'
 import { PriceLegend } from '@/components/domain/orders/PriceLegend'
+import { PrintableQuote } from '@/components/domain/orders/PrintableQuote'
 
 export function OrderFormPage() {
   const { id } = useParams<{ id?: string }>()
@@ -32,6 +33,7 @@ export function OrderFormPage() {
   // Resolve the order being duplicated, if any. We use the same useOrder
   // hook as the edit flow so the data shape is consistent.
   const { data: sourceOrder, isLoading: isLoadingSource } = useOrder(duplicateFrom)
+  const [printOpen, setPrintOpen] = useState(false)
   const { data: existing, isLoading } = useOrder(id)
   const { data: settings } = useSettings()
   const createMut = useCreateOrder()
@@ -133,6 +135,15 @@ export function OrderFormPage() {
           description={pageDescription}
           actions={
             <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setPrintOpen(true)}
+                disabled={!existing && !sourceOrder}
+              >
+                <Printer size={14} /> Stampa preventivo
+              </Button>
               {isEdit && (
                 <Button
                   type="button"
@@ -245,6 +256,12 @@ export function OrderFormPage() {
             </div>
           )}
         </form>
+        <PrintableQuote
+          orderId={id ?? sourceOrder?.id ?? 'new'}
+          values={methods.watch()}
+          open={printOpen}
+          onClose={() => setPrintOpen(false)}
+        />
       </div>
     </FormProvider>
   )

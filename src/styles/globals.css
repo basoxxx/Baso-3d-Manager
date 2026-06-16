@@ -43,3 +43,20 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Print styles — when the user prints from the PrintableQuote modal,
+   hide everything that isn't the quote article. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  body [data-print-root],
+  body [data-print-root] * {
+    visibility: visible;
+  }
+  body [data-print-root] {
+    position: absolute;
+    inset: 0;
+  }
+}
