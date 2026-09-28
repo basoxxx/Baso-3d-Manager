@@ -38,6 +38,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             let app_paths = paths::AppPaths::resolve(app.handle())?;
             let pool = db::init_pool(&app_paths.db_path)

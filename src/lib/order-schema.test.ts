@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import type { OrderStatus } from '@/lib/db-types'
 import {
   orderFormSchema,
   toNewOrder,
@@ -31,7 +32,7 @@ describe('orderFormSchema', () => {
   })
 
   it('rejects bad status', () => {
-    const r = orderFormSchema.safeParse({ ...base, status: 'BOGUS' as any })
+    const r = orderFormSchema.safeParse({ ...base, status: 'BOGUS' as unknown as OrderStatus })
     expect(r.success).toBe(false)
   })
 })

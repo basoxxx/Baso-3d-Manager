@@ -2,6 +2,22 @@
 
 Tutte le modifiche notevoli a BASO 3D Manager.
 
+## [0.3.1] - 2026-09-28
+
+### Aggiunto
+- **Release automatica**: ogni push su `main` con una nuova versione builda macOS (arm64 + Intel) e Windows e pubblica la release (non più bozza). Nessuna chiave privata su GitHub: la firma per l'auto-update in-app è opzionale e si attiva da sola se si aggiunge il secret `TAURI_SIGNING_PRIVATE_KEY`. Nuovo script `bun run version:patch|minor|major` che allinea `package.json`, `tauri.conf.json` e `Cargo.toml`.
+- **CI**: controllo allineamento versioni, ESLint, verifica che `db-types.generated.ts` sia aggiornato.
+
+### Corretto
+- **Auto-update non funzionante**: la release restava in bozza, quindi `releases/latest` non la trovava, e non venivano generati i bundle firmati (ora abilitati quando c'è la chiave).
+- **Build di release bloccata** da versioni disallineate tra pacchetti Tauri npm e crate Rust: allineati e `Cargo.lock` ora versionato, così non si disallineano più.
+- **"Riavvia per aggiornare" non faceva nulla**: il plugin Rust `tauri-plugin-process` non era registrato (mancava anche il permesso `process:default`).
+- **Percentuale di download dell'update** errata (mostrava la dimensione del singolo chunk invece del totale scaricato); stato bloccato su "download" se l'update spariva; il controllo periodico ogni 6h cancellava il pulsante di riavvio.
+- **CI sempre rossa**: il runner Linux non aveva le librerie WebKitGTK richieste da Tauri.
+- **Build macOS Intel** fallita: target `x86_64-apple-darwin` non installato sul runner arm64.
+- **Tipi TS generati** non rigenerati quando cambiavano `stock_audit.rs` / `notifications.rs` (`build.rs`).
+- **`bun run lint`** rotto (mancava `eslint.config.js`); rimossi 4 cast `any`.
+
 ## [0.3.0] - 2026-06-15
 
 Release con robustezza, type-safety end-to-end e tutte le feature di produttivita UX (palette comandi, duplica, audit log, dashboard alerts, stampa PDF, notifiche).
@@ -49,6 +65,7 @@ Release con robustezza, type-safety end-to-end e tutte le feature di produttivit
 - macOS: app ancora non firmata. Windows: ancora SmartScreen warning.
 - Notifiche native OS sono preparate ma non attive (richiedono `tauri-plugin-notification` non disponibile offline). Il design IPC e JSON payload sono pronti per uno swap futuro.
 
+[0.3.1]: https://github.com/basoxxx/Baso-3d-Manager/releases/tag/v0.3.1
 [0.3.0]: https://github.com/basoxxx/Baso-3d-Manager/releases/tag/v0.3.0
 [0.2.2]: https://github.com/basoxxx/Baso-3d-Manager/releases/tag/v0.2.2
 [0.2.0]: https://github.com/diegobasolo/baso-3d-manager/releases/tag/v0.2.0

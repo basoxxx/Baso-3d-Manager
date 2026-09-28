@@ -1,6 +1,6 @@
 [package]
 name = "baso-3d-manager"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 description = "Gestionale stampa 3D"
 authors = ["BASO"]
@@ -20,6 +20,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-window-state = "2"
 

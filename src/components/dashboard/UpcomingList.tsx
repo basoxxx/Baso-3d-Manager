@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import type { UpcomingOrder } from '@/lib/dashboard-types'
 import { StatusBadge } from '@/components/domain/orders/StatusBadge'
+import type { OrderStatus } from '@/lib/db-types'
 
 interface UpcomingListProps {
   orders: UpcomingOrder[]
@@ -44,7 +45,7 @@ export function UpcomingList({ orders }: UpcomingListProps) {
               <div className="text-right">
                 <div className="text-sm font-semibold text-success">€{o.total.toFixed(2)}</div>
                 <div className="mt-1">
-                  <StatusBadge status={o.status as any} />
+                  <StatusBadge status={o.status as OrderStatus} />
                 </div>
               </div>
             </div>
