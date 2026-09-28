@@ -16,13 +16,13 @@
     "tauri:build:mac-intel": "tauri build --target x86_64-apple-darwin",
     "tauri:build:win": "tauri build --target x86_64-pc-windows-msvc",
     "tauri:build:all": "tauri build --target universal-apple-darwin",
-    "version:patch": "bunx npm-version patch && git push --follow-tags",
-    "version:minor": "bunx npm-version minor && git push --follow-tags",
-    "version:major": "bunx npm-version major && git push --follow-tags",
+    "version:patch": "node scripts/bump-version.mjs patch",
+    "version:minor": "node scripts/bump-version.mjs minor",
+    "version:major": "node scripts/bump-version.mjs major",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "lint": "eslint src --ext .ts,.tsx",
+    "lint": "eslint src",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {

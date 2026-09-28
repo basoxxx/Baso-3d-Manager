@@ -8,23 +8,23 @@ export function UpdateIndicator() {
   const [progress, setProgress] = useState(0)
   const [version, setVersion] = useState<string | null>(null)
   const totalRef = useRef(0)
+  const downloadedRef = useRef(0)
 
   useEffect(() => {
     let mounted = true
+    // The periodic re-check must not clobber an in-flight download or a
+    // "restart to update" prompt.
+    const busy = (s: typeof status) => s === 'downloading' || s === 'ready'
     const checkUpdate = async () => {
-      setStatus('checking')
+      setStatus((s) => (busy(s) ? s : 'checking'))
       try {
         const update = await check()
         if (!mounted) return
-        if (update) {
-          setVersion(update.version)
-          setStatus('available')
-        } else {
-          setStatus('none')
-        }
+        if (update) setVersion(update.version)
+        setStatus((s) => (busy(s) ? s : update ? 'available' : 'none'))
       } catch (e) {
         console.error('update check failed', e)
-        setStatus('none')
+        if (mounted) setStatus((s) => (busy(s) ? s : 'none'))
       }
     }
     checkUpdate()
@@ -36,16 +36,22 @@ export function UpdateIndicator() {
     setStatus('downloading')
     try {
       const update = await check()
-      if (!update) return
+      if (!update) {
+        setStatus('none')
+        return
+      }
       await update.downloadAndInstall((event) => {
         switch (event.event) {
           case 'Started': {
             setProgress(0)
+            downloadedRef.current = 0
             totalRef.current = event.data.contentLength ?? 0
             break
           }
           case 'Progress': {
-            setProgress(totalRef.current ? event.data.chunkLength / totalRef.current : 0)
+            // chunkLength is the size of this chunk only, not the running total.
+            downloadedRef.current += event.data.chunkLength
+            setProgress(totalRef.current ? Math.min(downloadedRef.current / totalRef.current, 1) : 0)
             break
           }
           case 'Finished': setProgress(1); break

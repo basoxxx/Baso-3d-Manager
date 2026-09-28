@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, Eye, Download, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { useOrders, useDeleteOrder, useSetOrderStatus, type Order } from '@/hooks/useOrders'
 import { ORDER_STATUSES } from '@/lib/order-schema'
+import type { OrderStatus } from '@/lib/db-types'
 import { ipc } from '@/lib/ipc'
 import { Button } from '@/components/ui/Button'
 import { Table } from '@/components/ui/Table'
@@ -20,7 +21,7 @@ export function OrdersPage() {
   const [toDelete, setToDelete] = useState<Order | null>(null)
   const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
-  const { data, isLoading } = useOrders({ status: statusFilter ? (statusFilter as any) : undefined })
+  const { data, isLoading } = useOrders({ status: statusFilter ? (statusFilter as OrderStatus) : undefined })
   const deleteMut = useDeleteOrder()
   const setStatus = useSetOrderStatus()
 

@@ -1,59 +1,176 @@
 name: Release
 
+# Fully automatic: every push to main whose app version (package.json /
+# tauri.conf.json / Cargo.toml) has no `v<version>` release yet builds the
+# installers, uploads them together with the signed updater bundles and
+# latest.json, and publishes the release. Installed apps then pick the new
+# version up through the in-app updater.
+#
+# To ship: `bun run version:patch` and push/merge to main. That's it.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   TAURI_SIGNING_PRIVATE_KEY           content of the key generated with
+#                                       `bun tauri signer generate`, matching
+#                                       plugins.updater.pubkey in tauri.conf.json
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its password (empty if none)
+
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_id: ${{ steps.create.outputs.result }}
+      should_release: ${{ steps.exists.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "version=$(node scripts/check-version.mjs)" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if already released
+        id: exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft -q .isDraft 2>/dev/null | grep -q false; then
+            echo "Release $TAG already published, nothing to do."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check signing secret
+        if: steps.exists.outputs.should_release == 'true'
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::Missing TAURI_SIGNING_PRIVATE_KEY secret: the auto-updater cannot verify unsigned bundles."
+            exit 1
+          fi
+
+      - name: Create (or reuse) draft release
+        id: create
+        if: steps.exists.outputs.should_release == 'true'
+        uses: actions/github-script@v7
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        with:
+          script: |
+            const tag = `v${process.env.VERSION}`
+            const { owner, repo } = context.repo
+            // Reuse a draft left behind by a failed run so assets don't pile up.
+            const releases = await github.paginate(github.rest.repos.listReleases, { owner, repo })
+            const draft = releases.find((r) => r.draft && r.tag_name === tag)
+            if (draft) {
+              for (const asset of draft.assets) {
+                await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: asset.id })
+              }
+              await github.rest.repos.updateRelease({ owner, repo, release_id: draft.id, target_commitish: context.sha })
+              return draft.id
+            }
+            const { data } = await github.rest.repos.createRelease({
+              owner,
+              repo,
+              tag_name: tag,
+              name: `BASO 3D Manager ${tag}`,
+              target_commitish: context.sha,
+              draft: true,
+              body: [
+                `See [CHANGELOG.md](https://github.com/${owner}/${repo}/blob/${tag}/CHANGELOG.md) for the full list of changes.`,
+                '',
+                'Download the macOS DMG (Apple Silicon / Intel) or the Windows installer from the assets below.',
+                'Already installed? The app updates itself automatically.',
+                '',
+                `Report issues: https://github.com/${owner}/${repo}/issues`,
+              ].join('\n'),
+            })
+            return data.id
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: prepare
+    if: needs.prepare.outputs.should_release == 'true'
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
-          - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
-          - platform: windows-latest
-            args: '--target x86_64-pc-windows-msvc'
-
-    name: Build (${{ matrix.platform }})
+          - name: macOS Apple Silicon
+            platform: macos-latest
+            target: aarch64-apple-darwin
+          - name: macOS Intel
+            platform: macos-latest
+            target: x86_64-apple-darwin
+          - name: Windows
+            platform: windows-latest
+            target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.platform }}
-
     steps:
       - uses: actions/checkout@v4
 
+      # The macOS runners are arm64: the Intel target must be installed
+      # explicitly or the x86_64 build fails.
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri -> target
+          key: ${{ matrix.target }}
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - name: Install dependencies
         run: bun install
 
-      - name: Build
+      - name: Build and upload
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: ${{ github.ref_name }}
-          releaseBody: |
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md) for the full list of changes.
-            Download the macOS DMG (Apple Silicon / Intel) or the Windows installer from the assets below.
-            Report issues: https://github.com/${{ github.repository }}/issues
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          args: --target ${{ matrix.target }}
+
+  publish:
+    name: Publish release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      # Only flip the draft once every platform uploaded its assets, so
+      # latest.json never points at a missing platform.
+      - uses: actions/github-script@v7
+        env:
+          RELEASE_ID: ${{ needs.prepare.outputs.release_id }}
+        with:
+          script: |
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: Number(process.env.RELEASE_ID),
+              draft: false,
+              prerelease: false,
+              make_latest: 'true',
+            })

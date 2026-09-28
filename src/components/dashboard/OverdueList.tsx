@@ -8,6 +8,7 @@ import { Clock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { OverdueOrder } from '@/lib/db-types.generated'
 import { StatusBadge } from '@/components/domain/orders/StatusBadge'
+import type { OrderStatus } from '@/lib/db-types'
 
 interface OverdueListProps {
   orders: OverdueOrder[]
@@ -43,7 +44,7 @@ export function OverdueList({ orders }: OverdueListProps) {
               <div className="flex-1">
                 <div className="font-medium text-text-1">{o.customer_name}</div>
                 <div className="flex items-center gap-2 text-xs text-text-3">
-                  <StatusBadge status={o.status as any} />
+                  <StatusBadge status={o.status as OrderStatus} />
                   <span className="text-warning">+{o.days_old}gg</span>
                 </div>
               </div>

@@ -118,13 +118,13 @@ fn main() {
     }
 
     fs::write(&out_dir, buf).expect("write db-types.generated.ts");
-    println!("cargo:rerun-if-changed=src/repos/customers.rs");
-    println!("cargo:rerun-if-changed=src/repos/filaments.rs");
-    println!("cargo:rerun-if-changed=src/repos/printers.rs");
-    println!("cargo:rerun-if-changed=src/repos/orders.rs");
-    println!("cargo:rerun-if-changed=src/repos/quote_items.rs");
-    println!("cargo:rerun-if-changed=src/repos/settings.rs");
-    println!("cargo:rerun-if-changed=src/commands/dashboard.rs");
+    // Derived from EXPORTED_STRUCTS so a newly exported file can't be
+    // forgotten here (stock_audit.rs / notifications.rs used to be).
+    let mut watched: Vec<&str> = EXPORTED_STRUCTS.iter().map(|(_, rel)| *rel).collect();
+    watched.dedup();
+    for rel in watched {
+        println!("cargo:rerun-if-changed={rel}");
+    }
 }
 
 fn find_struct<'a>(ast: &'a syn::File, name: &str) -> Option<&'a syn::ItemStruct> {

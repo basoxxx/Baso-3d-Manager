@@ -1,6 +1,6 @@
 # BASO 3D Manager
 
-**Versione 0.3.0** (2026-06-15) — vedi [CHANGELOG](./CHANGELOG.md). Include ⌘K palette, audit log stock, dashboard alerts, stampa PDF, duplica ordine, notifiche in-app.
+**Versione 0.3.1** (2026-09-28) — vedi [CHANGELOG](./CHANGELOG.md). Include ⌘K palette, audit log stock, dashboard alerts, stampa PDF, duplica ordine, notifiche in-app.
 
 Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), offline-first, basato su Tauri 2 + React + SQLite.
 
@@ -21,7 +21,7 @@ Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), 
 
 - **79 test Rust** (cargo test) — copertura: migrations, repos (customers, filaments, printers, orders, quote_items, settings, stock_audit, notifications), commands (dashboard, export, csv_export), build script pinning
 - **141 test TypeScript** (vitest) — copertura: schemi Zod, contract IPC, react-hook-form flow, palette comandi, StockAuditList, NotificationBell, useDashboardAlerts, quote-format
-- **CI matrix** (GitHub Actions) — `bunx tsc --noEmit` + `bunx vitest run` + `cargo test` ad ogni PR
+- **CI matrix** (GitHub Actions) — `tsc` + ESLint + `vitest` + `cargo test` + verifica versioni/tipi generati ad ogni PR
 - **0 warning** nel tree principale
 - **CSP stretta** — `default-src 'self'`, no remote script
 
@@ -61,11 +61,24 @@ bun run tauri:build:win
 
 I bundle sono in `src-tauri/target/release/bundle/`.
 
-## Release
+## Release (automatica)
 
 ```bash
-bun run version:patch   # bump + tag + push → CI builda e pubblica
+bun run version:patch   # (o :minor / :major) aggiorna package.json, tauri.conf.json, Cargo.toml e fa commit
+git push                # su main
 ```
+
+Ad ogni push su `main` il workflow **Release** controlla la versione: se non esiste ancora la release `v<versione>`,
+builda gli installer macOS (Apple Silicon + Intel) e Windows, carica i bundle firmati per l'updater e `latest.json`,
+e pubblica la release. Le app già installate si aggiornano da sole (pulsante "Aggiorna" in topbar).
+Si può lanciare anche a mano da *Actions → Release → Run workflow*.
+
+**Setup una tantum** — in *Settings → Secrets and variables → Actions* servono:
+
+- `TAURI_SIGNING_PRIVATE_KEY`: la chiave privata generata con `bun tauri signer generate`, corrispondente a `plugins.updater.pubkey` in `tauri.conf.json`
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: la sua password (vuota se non impostata)
+
+Senza la chiave la release si ferma subito con un errore esplicito.
 
 ## Sicurezza
 
