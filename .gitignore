@@ -10,7 +10,6 @@ dist-app/
 
 # Tauri / Rust
 src-tauri/target/
-src-tauri/Cargo.lock
 src-tauri/gen/
 
 # Env

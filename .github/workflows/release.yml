@@ -2,13 +2,14 @@ name: Release
 
 # Fully automatic: every push to main whose app version (package.json /
 # tauri.conf.json / Cargo.toml) has no `v<version>` release yet builds the
-# installers, uploads them together with the signed updater bundles and
-# latest.json, and publishes the release. Installed apps then pick the new
-# version up through the in-app updater.
+# macOS and Windows installers and publishes the release.
 #
 # To ship: `bun run version:patch` and push/merge to main. That's it.
 #
-# Required repository secrets (Settings → Secrets and variables → Actions):
+# Updater signing is OPTIONAL and off by default, so no private key lives on
+# GitHub: users download new versions from the Releases page. To turn on
+# in-app auto-update later, add these repository secrets and the workflow
+# picks them up on its own (signed updater bundles + latest.json):
 #   TAURI_SIGNING_PRIVATE_KEY           content of the key generated with
 #                                       `bun tauri signer generate`, matching
 #                                       plugins.updater.pubkey in tauri.conf.json
@@ -34,6 +35,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       release_id: ${{ steps.create.outputs.result }}
       should_release: ${{ steps.exists.outputs.should_release }}
+      signing: ${{ steps.signing.outputs.enabled }}
     steps:
       - uses: actions/checkout@v4
 
@@ -54,14 +56,16 @@ jobs:
             echo "should_release=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Check signing secret
-        if: steps.exists.outputs.should_release == 'true'
+      - name: Detect updater signing key
+        id: signing
         env:
           KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
-          if [ -z "$KEY" ]; then
-            echo "::error::Missing TAURI_SIGNING_PRIVATE_KEY secret: the auto-updater cannot verify unsigned bundles."
-            exit 1
+          if [ -n "$KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No TAURI_SIGNING_PRIVATE_KEY secret: publishing installers without in-app auto-update."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create (or reuse) draft release
@@ -95,7 +99,7 @@ jobs:
                 `See [CHANGELOG.md](https://github.com/${owner}/${repo}/blob/${tag}/CHANGELOG.md) for the full list of changes.`,
                 '',
                 'Download the macOS DMG (Apple Silicon / Intel) or the Windows installer from the assets below.',
-                'Already installed? The app updates itself automatically.',
+                'Already installed? Download and run the new installer over the old version (your data is kept).',
                 '',
                 `Report issues: https://github.com/${owner}/${repo}/issues`,
               ].join('\n'),
@@ -152,7 +156,9 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           releaseId: ${{ needs.prepare.outputs.release_id }}
-          args: --target ${{ matrix.target }}
+          # With a signing key, also build the signed updater bundles (tauri-action
+          # then uploads latest.json). Without one, plain installers only.
+          args: --target ${{ matrix.target }}${{ needs.prepare.outputs.signing == 'true' && ' --config src-tauri/tauri.updater.conf.json' || '' }}
 
   publish:
     name: Publish release

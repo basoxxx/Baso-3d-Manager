@@ -5,11 +5,12 @@ Tutte le modifiche notevoli a BASO 3D Manager.
 ## [0.3.1] - 2026-09-28
 
 ### Aggiunto
-- **Release automatica**: ogni push su `main` con una nuova versione builda macOS (arm64 + Intel) e Windows, firma i bundle per l'updater, carica `latest.json` e pubblica la release (non più bozza). Nuovo script `bun run version:patch|minor|major` che allinea `package.json`, `tauri.conf.json` e `Cargo.toml`.
+- **Release automatica**: ogni push su `main` con una nuova versione builda macOS (arm64 + Intel) e Windows e pubblica la release (non più bozza). Nessuna chiave privata su GitHub: la firma per l'auto-update in-app è opzionale e si attiva da sola se si aggiunge il secret `TAURI_SIGNING_PRIVATE_KEY`. Nuovo script `bun run version:patch|minor|major` che allinea `package.json`, `tauri.conf.json` e `Cargo.toml`.
 - **CI**: controllo allineamento versioni, ESLint, verifica che `db-types.generated.ts` sia aggiornato.
 
 ### Corretto
-- **Auto-update non funzionante**: non venivano generati i bundle firmati né `latest.json` (`createUpdaterArtifacts`), e la release restava in bozza quindi `releases/latest` non la trovava.
+- **Auto-update non funzionante**: la release restava in bozza, quindi `releases/latest` non la trovava, e non venivano generati i bundle firmati (ora abilitati quando c'è la chiave).
+- **Build di release bloccata** da versioni disallineate tra pacchetti Tauri npm e crate Rust: allineati e `Cargo.lock` ora versionato, così non si disallineano più.
 - **"Riavvia per aggiornare" non faceva nulla**: il plugin Rust `tauri-plugin-process` non era registrato (mancava anche il permesso `process:default`).
 - **Percentuale di download dell'update** errata (mostrava la dimensione del singolo chunk invece del totale scaricato); stato bloccato su "download" se l'update spariva; il controllo periodico ogni 6h cancellava il pulsante di riavvio.
 - **CI sempre rossa**: il runner Linux non aveva le librerie WebKitGTK richieste da Tauri.

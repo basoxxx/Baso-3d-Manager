@@ -63,5 +63,8 @@ jobs:
       - name: Generated TS types are up to date
         run: git diff --exit-code -- src/lib/db-types.generated.ts
 
-      - name: Build web
-        run: bun run build
+      # Same entry point as the release (runs the web build too), so problems
+      # that only `tauri build` catches, like npm/crate version mismatches,
+      # fail here instead of in the release.
+      - name: Tauri build (debug, no bundle)
+        run: bunx tauri build --debug --no-bundle

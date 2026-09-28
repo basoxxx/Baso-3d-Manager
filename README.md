@@ -13,7 +13,7 @@ Gestionale desktop per servizi di stampa 3D. Multipiattaforma (macOS, Windows), 
 - Export CSV per **clienti, ordini, filamenti, stampanti**
 - 🖨️ **Stampa / PDF del preventivo** — il pulsante nel form apre un'anteprima con numero, totale e layout pulito, stampabile dal browser o salvabile come PDF (zero dipendenze extra) (UTF-8 BOM, separatore `;`, date `dd/mm/yyyy`, compatibile Excel IT)
 - Backup/ripristino ZIP
-- Auto-update via GitHub Releases
+- Release automatiche su GitHub (auto-update in-app opzionale, vedi [Release](#release-automatica))
 - 🔔 **Centro notifiche in-app** — campanella in topbar con badge, pannello a tendina con lista notifiche, dismiss + segna come letto, e generazione automatica da alert dashboard (filamenti bassi, ordini in ritardo)
 - Dark mode
 
@@ -69,16 +69,16 @@ git push                # su main
 ```
 
 Ad ogni push su `main` il workflow **Release** controlla la versione: se non esiste ancora la release `v<versione>`,
-builda gli installer macOS (Apple Silicon + Intel) e Windows, carica i bundle firmati per l'updater e `latest.json`,
-e pubblica la release. Le app già installate si aggiornano da sole (pulsante "Aggiorna" in topbar).
+builda gli installer macOS (Apple Silicon + Intel) e Windows e pubblica la release su GitHub.
 Si può lanciare anche a mano da *Actions → Release → Run workflow*.
 
-**Setup una tantum** — in *Settings → Secrets and variables → Actions* servono:
+Nessuna chiave privata è salvata su GitHub: per aggiornare, si scarica il nuovo installer dalla pagina Releases
+e lo si installa sopra la versione precedente (i dati restano).
 
-- `TAURI_SIGNING_PRIVATE_KEY`: la chiave privata generata con `bun tauri signer generate`, corrispondente a `plugins.updater.pubkey` in `tauri.conf.json`
-- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: la sua password (vuota se non impostata)
-
-Senza la chiave la release si ferma subito con un errore esplicito.
+**Auto-update dall'app (opzionale)** — per attivarlo basta aggiungere in *Settings → Secrets and variables → Actions*
+`TAURI_SIGNING_PRIVATE_KEY` (chiave generata con `bun tauri signer generate`, corrispondente a `plugins.updater.pubkey`
+in `tauri.conf.json`) e `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: il workflow li rileva da solo e pubblica anche i bundle
+firmati e `latest.json`.
 
 ## Sicurezza
 
